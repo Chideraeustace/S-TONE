@@ -1,9 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
-import { NavLink, Link } from 'react-router-dom';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay } from 'swiper/modules';
-import 'swiper/css';
-import { BiPhone, BiDollar, BiCheck, BiSearch, BiUser, BiHeart, BiCart, BiMenu, BiChevronDown, BiCog } from 'react-icons/bi';
+import { useState, useEffect, useRef } from "react";
+import { NavLink, Link } from "react-router-dom";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay } from "swiper/modules";
+import "swiper/css";
+import {
+  BiPhone,
+  BiDollar,
+  BiCheck,
+  BiSearch,
+  BiUser,
+  BiHeart,
+  BiCart,
+  BiMenu,
+  BiChevronDown,
+  BiCog,
+} from "react-icons/bi";
 
 const Header = () => {
   const [currencyOpen, setCurrencyOpen] = useState(false);
@@ -12,10 +23,12 @@ const Header = () => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [iPhoneMenuOpen, setIPhoneMenuOpen] = useState(false);
   const [macBookMenuOpen, setMacBookMenuOpen] = useState(false);
+  const [androidMenuOpen, setAndroidMenuOpen] = useState(false);
   const [cartCount] = useState(0); // Cart count starts at 0, managed externally
 
   const iPhoneMenuRef = useRef(null);
   const macBookMenuRef = useRef(null);
+  const androidMenuRef = useRef(null);
   const currencyMenuRef = useRef(null);
   const accountMenuRef = useRef(null);
 
@@ -24,28 +37,47 @@ const Header = () => {
     setMobileNavOpen(false);
     setIPhoneMenuOpen(false);
     setMacBookMenuOpen(false);
+    setAndroidMenuOpen(false);
   };
 
   // Click outside handler to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (iPhoneMenuRef.current && !iPhoneMenuRef.current.contains(event.target)) {
+      if (
+        iPhoneMenuRef.current &&
+        !iPhoneMenuRef.current.contains(event.target)
+      ) {
         setIPhoneMenuOpen(false);
       }
-      if (macBookMenuRef.current && !macBookMenuRef.current.contains(event.target)) {
+      if (
+        macBookMenuRef.current &&
+        !macBookMenuRef.current.contains(event.target)
+      ) {
         setMacBookMenuOpen(false);
       }
-      if (currencyMenuRef.current && !currencyMenuRef.current.contains(event.target)) {
+      if (
+        androidMenuRef.current &&
+        !androidMenuRef.current.contains(event.target)
+      ) {
+        setAndroidMenuOpen(false);
+      }
+      if (
+        currencyMenuRef.current &&
+        !currencyMenuRef.current.contains(event.target)
+      ) {
         setCurrencyOpen(false);
       }
-      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target)) {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target)
+      ) {
         setAccountOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -56,8 +88,13 @@ const Header = () => {
           <div className="flex items-center justify-between">
             <div className="hidden lg:flex items-center">
               <BiPhone className="mr-2 text-lg text-gray-600" />
-              <span className="text-sm text-gray-700">Need help? Call us: </span>
-              <a href="tel:+1800-275-2273" className="ml-1 text-sm text-blue-600 hover:text-blue-800 transition-colors">
+              <span className="text-sm text-gray-700">
+                Need help? Call us:{" "}
+              </span>
+              <a
+                href="tel:+1800-275-2273"
+                className="ml-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+              >
                 +233 540 000 982
               </a>
             </div>
@@ -72,9 +109,12 @@ const Header = () => {
                 effect="slide"
                 className="h-8 text-sm lg:text-base text-gray-700"
               >
-                <SwiperSlide>🚚 Free shipping on orders over GHS 780</SwiperSlide>
-                <SwiperSlide>📱 Pre-order iPhone 17 now, ships September 19</SwiperSlide>
-                <SwiperSlide>💻 Get up to GHS 17,160 trade-in credit on MacBooks</SwiperSlide>
+                <SwiperSlide>
+                  🚚 Free shipping on orders!!!
+                </SwiperSlide>
+                <SwiperSlide>
+                  📱 Pre-order iPhone 17 now, get it delivered to you!!!
+                </SwiperSlide>
               </Swiper>
             </div>
             <div className="hidden lg:flex justify-end space-x-4">
@@ -83,18 +123,18 @@ const Header = () => {
                   onClick={() => setCurrencyOpen(!currencyOpen)}
                   className="flex items-center text-sm text-gray-700 hover:text-blue-600 transition-colors"
                 >
-                  <BiDollar className="mr-2 text-lg" />GHS
+                  <BiDollar className="mr-2 text-lg" />
+                  GHS
                 </button>
                 <ul
                   className={`absolute right-0 bg-white shadow-lg rounded mt-2 w-48 z-50 transition-all duration-200 ${
-                    currencyOpen ? 'block opacity-100' : 'hidden opacity-0'
+                    currencyOpen ? "block opacity-100" : "hidden opacity-0"
                   }`}
                 >
                   <li>
-                    <button
-                      className="flex items-center px-4 py-3 hover:bg-gray-50 w-full text-left text-base text-gray-700"
-                    >
-                      <BiCheck className="mr-2 text-lg text-blue-600" />GHS
+                    <button className="flex items-center px-4 py-3 hover:bg-gray-50 w-full text-left text-base text-gray-700">
+                      <BiCheck className="mr-2 text-lg text-blue-600" />
+                      GHS
                     </button>
                   </li>
                 </ul>
@@ -112,7 +152,11 @@ const Header = () => {
               className="h-8 transition-transform hover:scale-105"
             />
           </Link>
-          <div className={`xl:flex w-1/3 max-w-md ${mobileSearchOpen ? 'block' : 'hidden'}`}>
+          <div
+            className={`xl:flex w-1/3 max-w-md ${
+              mobileSearchOpen ? "block" : "hidden"
+            }`}
+          >
             <div className="flex border border-gray-300 rounded-lg w-full bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
               <input
                 type="text"
@@ -140,14 +184,16 @@ const Header = () => {
               </button>
               <div
                 className={`absolute right-0 bg-white shadow-lg rounded-lg mt-2 w-64 z-50 transition-all duration-200 ${
-                  accountOpen ? 'block opacity-100' : 'hidden opacity-0'
+                  accountOpen ? "block opacity-100" : "hidden opacity-0"
                 }`}
               >
                 <div className="p-4 border-b">
                   <h6 className="text-lg font-semibold text-gray-800">
                     Welcome to <span className="font-bold">Apple Store</span>
                   </h6>
-                  <p className="mb-0 text-sm text-gray-600">Manage your Apple ID & orders</p>
+                  <p className="mb-0 text-sm text-gray-600">
+                    Manage your Apple ID & orders
+                  </p>
                 </div>
                 <div className="p-4 space-y-2">
                   <Link
@@ -155,28 +201,32 @@ const Header = () => {
                     onClick={handleNavLinkClick}
                     className="flex items-center py-2 hover:text-blue-600 text-base text-gray-700 transition-colors"
                   >
-                    <BiUser className="mr-2 text-lg" />Apple ID
+                    <BiUser className="mr-2 text-lg" />
+                    Apple ID
                   </Link>
                   <Link
                     to="/account"
                     onClick={handleNavLinkClick}
                     className="flex items-center py-2 hover:text-blue-600 text-base text-gray-700 transition-colors"
                   >
-                    <BiCart className="mr-2 text-lg" />My Orders
+                    <BiCart className="mr-2 text-lg" />
+                    My Orders
                   </Link>
                   <Link
                     to="/account"
                     onClick={handleNavLinkClick}
                     className="flex items-center py-2 hover:text-blue-600 text-base text-gray-700 transition-colors"
                   >
-                    <BiHeart className="mr-2 text-lg" />Saved Items
+                    <BiHeart className="mr-2 text-lg" />
+                    Saved Items
                   </Link>
                   <Link
                     to="/account"
                     onClick={handleNavLinkClick}
                     className="flex items-center py-2 hover:text-blue-600 text-base text-gray-700 transition-colors"
                   >
-                    <BiCog className="mr-2 text-lg" />Settings
+                    <BiCog className="mr-2 text-lg" />
+                    Settings
                   </Link>
                 </div>
                 <div className="p-4 space-y-2">
@@ -226,7 +276,13 @@ const Header = () => {
       </div>
       <div className="bg-gray-50">
         <div className="container mx-auto px-4">
-          <nav className={`navmenu ${mobileNavOpen ? 'block w-full min-h-screen bg-white xl:bg-transparent' : 'hidden xl:block'}`}>
+          <nav
+            className={`navmenu ${
+              mobileNavOpen
+                ? "block w-full min-h-screen bg-white xl:bg-transparent"
+                : "hidden xl:block"
+            }`}
+          >
             <ul className="flex flex-col xl:flex-row space-y-4 xl:space-y-0 xl:space-x-6 py-4">
               <li>
                 <NavLink
@@ -234,8 +290,8 @@ const Header = () => {
                   onClick={handleNavLinkClick}
                   className={({ isActive }) =>
                     isActive
-                      ? 'text-blue-600 font-semibold text-base'
-                      : 'text-gray-700 hover:text-blue-600 text-base transition-colors'
+                      ? "text-blue-600 font-semibold text-base"
+                      : "text-gray-700 hover:text-blue-600 text-base transition-colors"
                   }
                 >
                   Home
@@ -247,8 +303,8 @@ const Header = () => {
                   onClick={handleNavLinkClick}
                   className={({ isActive }) =>
                     isActive
-                      ? 'text-blue-600 font-semibold text-base'
-                      : 'text-gray-700 hover:text-blue-600 text-base transition-colors'
+                      ? "text-blue-600 font-semibold text-base"
+                      : "text-gray-700 hover:text-blue-600 text-base transition-colors"
                   }
                 >
                   About
@@ -263,7 +319,7 @@ const Header = () => {
                 </button>
                 <div
                   className={`mobile-megamenu block xl:hidden max-h-96 overflow-y-auto bg-white shadow-lg rounded-lg mt-2 ${
-                    iPhoneMenuOpen ? 'block' : 'hidden'
+                    iPhoneMenuOpen ? "block" : "hidden"
                   }`}
                 >
                   <ul className="flex flex-col">
@@ -370,7 +426,7 @@ const Header = () => {
                 </div>
                 <div
                   className={`desktop-megamenu hidden xl:block absolute left-0 bg-white shadow-lg rounded-lg mt-2 w-[600px] p-4 z-50 transition-all duration-200 ${
-                    iPhoneMenuOpen ? 'block opacity-100' : 'hidden opacity-0'
+                    iPhoneMenuOpen ? "block opacity-100" : "hidden opacity-0"
                   }`}
                 >
                   <ul className="grid grid-cols-3 gap-4">
@@ -485,7 +541,7 @@ const Header = () => {
                 </button>
                 <div
                   className={`mobile-megamenu block xl:hidden max-h-96 overflow-y-auto bg-white shadow-lg rounded-lg mt-2 ${
-                    macBookMenuOpen ? 'block' : 'hidden'
+                    macBookMenuOpen ? "block" : "hidden"
                   }`}
                 >
                   <ul className="flex flex-col">
@@ -511,7 +567,7 @@ const Header = () => {
                 </div>
                 <div
                   className={`desktop-megamenu hidden xl:block absolute left-0 bg-white shadow-lg rounded-lg mt-2 w-[600px] p-4 z-50 transition-all duration-200 ${
-                    macBookMenuOpen ? 'block opacity-100' : 'hidden opacity-0'
+                    macBookMenuOpen ? "block opacity-100" : "hidden opacity-0"
                   }`}
                 >
                   <ul className="grid grid-cols-2 gap-4">
@@ -536,14 +592,326 @@ const Header = () => {
                   </ul>
                 </div>
               </li>
+              <li className="relative" ref={androidMenuRef}>
+                <button
+                  onClick={() => setAndroidMenuOpen(!androidMenuOpen)}
+                  className="flex items-center text-gray-700 hover:text-blue-600 text-base transition-colors"
+                >
+                  Galaxy S <BiChevronDown className="ml-1 text-lg" />
+                </button>
+                <div
+                  className={`mobile-megamenu block xl:hidden max-h-96 overflow-y-auto bg-white shadow-lg rounded-lg mt-2 ${
+                    androidMenuOpen ? "block" : "hidden"
+                  }`}
+                >
+                  <ul className="flex flex-col">
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S II
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S III
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S4
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S5
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S6 / S6 Edge
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S7 / S7 Edge
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S8 / S8+
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S9 / S9+
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S10e / S10 / S10+ / S10 5G
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S20 / S20+ / S20 Ultra
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S21 / S21+ / S21 Ultra
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S22 / S22+ / S22 Ultra
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S23 / S23+ / S23 Ultra
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S24 / S24+ / S24 Ultra
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Galaxy S25 / S25+ / S25 Ultra / S25 Edge
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+                <div
+                  className={`desktop-megamenu hidden xl:block absolute left-0 bg-white shadow-lg rounded-lg mt-2 w-[600px] p-4 z-50 transition-all duration-200 ${
+                    androidMenuOpen ? "block opacity-100" : "hidden opacity-0"
+                  }`}
+                >
+                  <ul className="grid grid-cols-3 gap-4">
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S II
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S III
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S4
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S5
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S6 / S6 Edge
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S7 / S7 Edge
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S8 / S8+
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S9 / S9+
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S10e / S10 / S10+ / S10 5G
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S20 / S20+ / S20 Ultra
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S21 / S21+ / S21 Ultra
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S22 / S22+ / S22 Ultra
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S23 / S23+ / S23 Ultra
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S24 / S24+ / S24 Ultra
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category"
+                        onClick={handleNavLinkClick}
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                      >
+                        Galaxy S25 / S25+ / S25 Ultra / S25 Edge
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </li>
               <li>
                 <NavLink
                   to="/category"
                   onClick={handleNavLinkClick}
                   className={({ isActive }) =>
                     isActive
-                      ? 'text-blue-600 font-semibold text-base'
-                      : 'text-gray-700 hover:text-blue-600 text-base transition-colors'
+                      ? "text-blue-600 font-semibold text-base"
+                      : "text-gray-700 hover:text-blue-600 text-base transition-colors"
                   }
                 >
                   Shop
@@ -555,8 +923,8 @@ const Header = () => {
                   onClick={handleNavLinkClick}
                   className={({ isActive }) =>
                     isActive
-                      ? 'text-blue-600 font-semibold text-base'
-                      : 'text-gray-700 hover:text-blue-600 text-base transition-colors'
+                      ? "text-blue-600 font-semibold text-base"
+                      : "text-gray-700 hover:text-blue-600 text-base transition-colors"
                   }
                 >
                   Contact
