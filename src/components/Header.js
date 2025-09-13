@@ -13,7 +13,6 @@ import {
   BiCart,
   BiMenu,
   BiChevronDown,
-  BiCog,
 } from "react-icons/bi";
 
 const Header = () => {
@@ -189,21 +188,13 @@ const Header = () => {
               >
                 <div className="p-4 border-b">
                   <h6 className="text-lg font-semibold text-gray-800">
-                    Welcome to <span className="font-bold">Apple Store</span>
+                    Welcome to <span className="font-bold">Lumixing</span>
                   </h6>
                   <p className="mb-0 text-sm text-gray-600">
-                    Manage your Apple ID & orders
+                    Manage your orders
                   </p>
                 </div>
                 <div className="p-4 space-y-2">
-                  <Link
-                    to="/account"
-                    onClick={handleNavLinkClick}
-                    className="flex items-center py-2 hover:text-blue-600 text-base text-gray-700 transition-colors"
-                  >
-                    <BiUser className="mr-2 text-lg" />
-                    Apple ID
-                  </Link>
                   <Link
                     to="/account"
                     onClick={handleNavLinkClick}
@@ -220,30 +211,8 @@ const Header = () => {
                     <BiHeart className="mr-2 text-lg" />
                     Saved Items
                   </Link>
-                  <Link
-                    to="/account"
-                    onClick={handleNavLinkClick}
-                    className="flex items-center py-2 hover:text-blue-600 text-base text-gray-700 transition-colors"
-                  >
-                    <BiCog className="mr-2 text-lg" />
-                    Settings
-                  </Link>
                 </div>
                 <div className="p-4 space-y-2">
-                  <Link
-                    to="/login"
-                    onClick={handleNavLinkClick}
-                    className="block w-full bg-blue-600 text-white py-3 text-center rounded-lg hover:bg-blue-700 transition-colors text-base"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/register"
-                    onClick={handleNavLinkClick}
-                    className="block w-full border border-blue-600 text-blue-600 py-3 text-center rounded-lg hover:bg-blue-50 transition-colors text-base"
-                  >
-                    Register
-                  </Link>
                 </div>
               </div>
             </div>

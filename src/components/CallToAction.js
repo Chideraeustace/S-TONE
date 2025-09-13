@@ -16,12 +16,6 @@ const CallToAction = () => (
         >
           Shop Now
         </Link>
-        <Link
-          to="/trade-in"
-          className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-blue-700 hover:border-blue-700 transition-colors duration-300"
-        >
-          Explore Trade-In
-        </Link>
       </div>
     </div>
   </section>
