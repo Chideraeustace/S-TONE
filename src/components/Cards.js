@@ -1,7 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { db } from "../Firebase";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  limit,
+  where,
+} from "firebase/firestore";
 
 const Cards = () => {
   const [products, setProducts] = useState([]);
@@ -9,29 +16,55 @@ const Cards = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchFeaturedProducts = async () => {
+    const fetchProductsByCategory = async () => {
       try {
-        // Fetch 3 featured products, ordered by createdAt
-        const q = query(
-          collection(db, "lumixing-product"),
-          orderBy("createdAt", "desc"),
-          limit(3)
+        // Fetch all categories
+        const categorySnapshot = await getDocs(
+          collection(db, "lumixing-categories")
         );
-        const querySnapshot = await getDocs(q);
-        const productList = querySnapshot.docs.map((doc) => ({
+        const categories = categorySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
+
+        // Fetch one product per category
+        const productList = [];
+        for (const category of categories) {
+          const q = query(
+            collection(db, "lumixing-product"),
+            where("categoryId", "==", category.id),
+            orderBy("createdAt", "desc"),
+            limit(1)
+          );
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            const product = querySnapshot.docs[0];
+            productList.push({
+              id: product.id,
+              ...product.data(),
+            });
+          }
+        }
+
         setProducts(productList);
         setLoading(false);
       } catch (err) {
-        setError("Failed to fetch featured products");
+        if (
+          err.code === "failed-precondition" &&
+          err.message.includes("index")
+        ) {
+          setError(
+            "Firestore query requires an index. Please create it in the Firebase Console."
+          );
+        } else {
+          setError("Failed to fetch products from categories");
+        }
         console.error(err);
         setLoading(false);
       }
     };
 
-    fetchFeaturedProducts();
+    fetchProductsByCategory();
   }, []);
 
   if (loading) {
@@ -45,12 +78,13 @@ const Cards = () => {
   if (error) {
     return (
       <div className="py-12 bg-white flex items-center justify-center">
-        <div className="p-4 bg-red-100 text-red-800 rounded-lg shadow-md flex items-center">
+        <div className="p-4 bg-red-100 text-red-800 rounded-lg flex items-center">
           <svg
             className="w-6 h-6 mr-2"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -87,15 +121,17 @@ const Cards = () => {
             products.map((product, index) => (
               <div
                 key={product.id}
-                className="bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                className="bg-white rounded-xl overflow-hidden transform transition-all duration-300 hover:-translate-y-1"
                 data-aos="fade-up"
                 data-aos-delay={index * 100}
               >
-                <img
-                  src={product.imageUrl}
-                  alt={product.title}
-                  className="w-full h-48 sm:h-56 object-cover transition-transform duration-300 hover:scale-105"
-                />
+                <div className="flex items-center justify-center bg-white">
+                  <img
+                    src={product.imageUrl}
+                    alt={product.title}
+                    className="w-full h-48 object-contain"
+                  />
+                </div>
                 <div className="p-4 sm:p-6">
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 truncate">
                     {product.title}
@@ -104,7 +140,7 @@ const Cards = () => {
                     {product.description}
                   </p>
                   <p className="text-gray-600 text-sm sm:text-base mb-4">
-                    ${product.price ? product.price.toFixed(2) : "N/A"}
+                    ₵{product.price ? product.price.toFixed(2) : "N/A"}
                   </p>
                   <Link
                     to={`/product-details/${product.id}`}
@@ -117,7 +153,7 @@ const Cards = () => {
             ))
           ) : (
             <p className="text-gray-600 text-center col-span-full">
-              No featured products available.
+              No products available in any category.
             </p>
           )}
         </div>

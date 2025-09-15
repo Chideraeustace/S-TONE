@@ -7,15 +7,15 @@ const BestSellers = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-    const fetchBestSellers = async () => {
+    const fetchRecentProducts = async () => {
       try {
-        // Fetch top 4 products, ordered by salesCount (or fallback to latest)
         const q = query(
           collection(db, "lumixing-product"),
-          orderBy("salesCount", "desc"), // Fallback: orderBy("createdAt", "desc")
-          limit(4)
+          orderBy("createdAt", "desc"),
+          limit(5)
         );
         const querySnapshot = await getDocs(q);
         const productList = querySnapshot.docs.map((doc) => ({
@@ -25,14 +25,32 @@ const BestSellers = () => {
         setProducts(productList);
         setLoading(false);
       } catch (err) {
-        setError("Failed to fetch best sellers");
+        setError("Failed to fetch recent products");
         console.error(err);
         setLoading(false);
       }
     };
 
-    fetchBestSellers();
+    fetchRecentProducts();
   }, []);
+
+  // Auto-slide effect (5 seconds)
+  useEffect(() => {
+    if (products.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % products.length);
+      }, 5000); // 5 seconds
+      return () => clearInterval(interval); // cleanup
+    }
+  }, [products]);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % products.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + products.length) % products.length);
+  };
 
   if (loading) {
     return (
@@ -45,12 +63,13 @@ const BestSellers = () => {
   if (error) {
     return (
       <div className="py-12 bg-gray-50 flex items-center justify-center">
-        <div className="p-4 bg-red-100 text-red-800 rounded-lg shadow-md flex items-center">
+        <div className="p-4 bg-red-100 text-red-800 rounded-lg flex items-center">
           <svg
             className="w-6 h-6 mr-2"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -74,42 +93,83 @@ const BestSellers = () => {
         >
           Best Sellers
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.length > 0 ? (
-            products.map((product, index) => (
+        {products.length > 0 ? (
+          <div className="relative">
+            {/* Slider Container */}
+            <div className="overflow-hidden">
               <div
-                key={product.id}
-                className="bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-                data-aos="fade-up"
-                data-aos-delay={index * 100}
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
               >
-                <img
-                  src={product.imageUrl}
-                  alt={product.title}
-                  className="w-full h-48 sm:h-56 object-cover transition-transform duration-300 hover:scale-105"
-                />
-                <div className="p-4 sm:p-6">
-                  <h5 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 truncate">
-                    {product.title}
-                  </h5>
-                  <p className="text-gray-600 text-sm sm:text-base mb-4">
-                    ${product.price ? product.price.toFixed(2) : "N/A"}
-                  </p>
-                  <Link
-                    to={`/product-details/${product.id}`}
-                    className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base hover:bg-blue-700 transition-colors duration-200"
+                {products.map((product, index) => (
+                  <div
+                    key={product.id}
+                    className="min-w-full flex items-center justify-center bg-white rounded-xl overflow-hidden"
+                    data-aos="fade-up"
+                    data-aos-delay={index * 100}
                   >
-                    View Details
-                  </Link>
-                </div>
+                    <Link to={`/product-details/${product.id}`}>
+                      <img
+                        src={product.imageUrl}
+                        alt={product.title}
+                        className="w-full h-48 object-contain"
+                      />
+                    </Link>
+                  </div>
+                ))}
               </div>
-            ))
-          ) : (
-            <p className="text-gray-600 text-center col-span-full">
-              No best sellers available.
-            </p>
-          )}
-        </div>
+            </div>
+            {/* Navigation Arrows */}
+            {products.length > 1 && (
+              <>
+                <button
+                  onClick={prevSlide}
+                  className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors duration-200"
+                  aria-label="Previous slide"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={nextSlide}
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors duration-200"
+                  aria-label="Next slide"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+              </>
+            )}
+          </div>
+        ) : (
+          <p className="text-gray-600 text-center">
+            No recent products available.
+          </p>
+        )}
       </div>
     </section>
   );

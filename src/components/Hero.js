@@ -4,9 +4,9 @@ import { Autoplay, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 import { BiSolidTruck, BiAward, BiHeadphone } from "react-icons/bi";
-import image1 from "../assets/iphone17-.jpeg";
-import image2 from "../assets/s24.jpeg";
-import image3 from "../assets/laptop2.jpeg";
+import image1 from "../assets/i7series.jpg";
+import image2 from "../assets/24.jpg";
+import image3 from "../assets/air.jpg";
 
 const Hero = () => {
   const slides = [
