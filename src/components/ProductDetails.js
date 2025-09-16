@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../Firebase";
 import { FaShoppingCart, FaSpinner } from "react-icons/fa";
+import { useCart } from "./CartContext"; // Import the useCart hook
 
 const ProductDetails = () => {
   const { productId } = useParams();
@@ -11,6 +12,7 @@ const ProductDetails = () => {
   const [error, setError] = useState(null);
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const { handleAddToCart } = useCart(); // Use the context's handleAddToCart
 
   const colorMap = {
     red: "bg-red-500",
@@ -74,15 +76,6 @@ const ProductDetails = () => {
       Math.min(Number(event.target.value), product?.quantity || 1)
     );
     setSelectedQuantity(value);
-  };
-
-  const handleAddToCart = () => {
-    if (product?.quantity === 0 || !selectedColor || selectedQuantity < 1)
-      return;
-    console.log(
-      `Added to cart: ${product.title}, Color: ${selectedColor}, Quantity: ${selectedQuantity}`
-    );
-    // Implement actual cart logic here
   };
 
   if (loading) {
@@ -227,7 +220,9 @@ const ProductDetails = () => {
             </div>
             {/* Add to Cart Button */}
             <button
-              onClick={handleAddToCart}
+              onClick={() =>
+                handleAddToCart(product, selectedColor, selectedQuantity)
+              }
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-lg transition-all transform hover:scale-105 ${
                 product.quantity === 0 || !selectedColor || selectedQuantity < 1
                   ? "bg-gray-400 text-gray-700 cursor-not-allowed"

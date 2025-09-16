@@ -14,6 +14,7 @@ import {
   BiMenu,
   BiChevronDown,
 } from "react-icons/bi";
+import { useCart } from "./CartContext"; // Import the useCart hook
 
 const Header = () => {
   const [currencyOpen, setCurrencyOpen] = useState(false);
@@ -23,7 +24,8 @@ const Header = () => {
   const [iPhoneMenuOpen, setIPhoneMenuOpen] = useState(false);
   const [macBookMenuOpen, setMacBookMenuOpen] = useState(false);
   const [androidMenuOpen, setAndroidMenuOpen] = useState(false);
-  const [cartCount] = useState(0); // Cart count starts at 0, managed externally
+  const { cart } = useCart(); // Use the cart state from context
+  const cartCount = cart.length; // Calculate cartCount from cart array
 
   const iPhoneMenuRef = useRef(null);
   const macBookMenuRef = useRef(null);
@@ -108,9 +110,7 @@ const Header = () => {
                 effect="slide"
                 className="h-8 text-sm lg:text-base text-gray-700"
               >
-                <SwiperSlide>
-                  🚚 Free shipping on orders!!!
-                </SwiperSlide>
+                <SwiperSlide>🚚 Free shipping on orders!!!</SwiperSlide>
                 <SwiperSlide>
                   📱 Pre-order iPhone 17 now, get it delivered to you!!!
                 </SwiperSlide>
@@ -212,8 +212,7 @@ const Header = () => {
                     Saved Items
                   </Link>
                 </div>
-                <div className="p-4 space-y-2">
-                </div>
+                <div className="p-4 space-y-2"></div>
               </div>
             </div>
             <Link
@@ -668,7 +667,7 @@ const Header = () => {
                       <Link
                         to="/category"
                         onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
                         Galaxy S20 / S20+ / S20 Ultra
                       </Link>
@@ -677,7 +676,7 @@ const Header = () => {
                       <Link
                         to="/category"
                         onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
                         Galaxy S21 / S21+ / S21 Ultra
                       </Link>
@@ -686,7 +685,7 @@ const Header = () => {
                       <Link
                         to="/category"
                         onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
                         Galaxy S22 / S22+ / S22 Ultra
                       </Link>
@@ -695,7 +694,7 @@ const Header = () => {
                       <Link
                         to="/category"
                         onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
                         Galaxy S23 / S23+ / S23 Ultra
                       </Link>
@@ -704,7 +703,7 @@ const Header = () => {
                       <Link
                         to="/category"
                         onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
                         Galaxy S24 / S24+ / S24 Ultra
                       </Link>
@@ -713,7 +712,7 @@ const Header = () => {
                       <Link
                         to="/category"
                         onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
                         Galaxy S25 / S25+ / S25 Ultra / S25 Edge
                       </Link>
