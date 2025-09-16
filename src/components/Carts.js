@@ -34,6 +34,12 @@ const Cart = () => {
     setGuestDetails((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Validate email format
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   // Separate async function to handle order saving
   const saveOrderToFirestore = async (response) => {
     try {
@@ -56,9 +62,12 @@ const Cart = () => {
         createdAt: serverTimestamp(),
         status: "confirmed",
       });
+      // Save email to localStorage
+      localStorage.setItem("userEmail", guestDetails.email);
     } catch (error) {
       console.error("Error saving order to Firestore:", error);
       toast.error("Failed to save order. Please contact support.");
+      throw error; // Re-throw to handle in callback
     }
   };
 
@@ -68,9 +77,14 @@ const Cart = () => {
       return;
     }
 
-    // Validate guest details (fallback, though button is disabled if incomplete)
+    // Validate guest details and email
     if (!isFormComplete) {
       toast.error("Please fill in all checkout details.");
+      return;
+    }
+
+    if (!validateEmail(guestDetails.email)) {
+      toast.error("Please enter a valid email address.");
       return;
     }
 
@@ -100,26 +114,20 @@ const Cart = () => {
         },
       },
       callback: function (response) {
-        // Handle payment success in a non-async callback
-        saveOrderToFirestore(response).then(() => {
-          navigate("/order-confirmation", {
-            state: {
-              transactionRef: response.reference,
-              cartItems: cart,
-              totalAmount: totalPrice,
-              customer: {
-                email: guestDetails.email,
-                name: guestDetails.name,
-                location: guestDetails.location,
-                phone: guestDetails.phone,
-              },
-            },
+        // Handle payment success
+        saveOrderToFirestore(response)
+          .then(() => {
+            clearCart();
+            setGuestDetails({ email: "", name: "", location: "", phone: "" });
+            toast.success(
+              "Order placed successfully! View your order in your account."
+            );
+            setLoading(false);
+            navigate("/account");
+          })
+          .catch(() => {
+            setLoading(false);
           });
-          clearCart();
-          setGuestDetails({ email: "", name: "", location: "", phone: "" });
-          toast.success("Order placed successfully!");
-          setLoading(false);
-        });
       },
       onClose: function () {
         toast.error("Payment cancelled.");
