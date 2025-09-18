@@ -14,7 +14,7 @@ import {
   BiMenu,
   BiChevronDown,
 } from "react-icons/bi";
-import { useCart } from "./CartContext"; // Import the useCart hook
+import { useCart } from "./CartContext";
 
 const Header = () => {
   const [currencyOpen, setCurrencyOpen] = useState(false);
@@ -24,8 +24,8 @@ const Header = () => {
   const [iPhoneMenuOpen, setIPhoneMenuOpen] = useState(false);
   const [macBookMenuOpen, setMacBookMenuOpen] = useState(false);
   const [androidMenuOpen, setAndroidMenuOpen] = useState(false);
-  const { cart } = useCart(); // Use the cart state from context
-  const cartCount = cart.length; // Calculate cartCount from cart array
+  const { cart } = useCart();
+  const cartCount = cart.length;
 
   const iPhoneMenuRef = useRef(null);
   const macBookMenuRef = useRef(null);
@@ -123,7 +123,7 @@ const Header = () => {
                   className="flex items-center text-sm text-gray-700 hover:text-blue-600 transition-colors"
                 >
                   <BiDollar className="mr-2 text-lg" />
-                  GHS
+                  USD
                 </button>
                 <ul
                   className={`absolute right-0 bg-white shadow-lg rounded mt-2 w-48 z-50 transition-all duration-200 ${
@@ -133,7 +133,7 @@ const Header = () => {
                   <li>
                     <button className="flex items-center px-4 py-3 hover:bg-gray-50 w-full text-left text-base text-gray-700">
                       <BiCheck className="mr-2 text-lg text-blue-600" />
-                      GHS
+                      USD
                     </button>
                   </li>
                 </ul>

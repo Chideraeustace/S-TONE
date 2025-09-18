@@ -3,7 +3,8 @@ import { useCart } from "./CartContext";
 import { Link, useNavigate } from "react-router-dom";
 import { FaTrash, FaPlus, FaMinus, FaSpinner } from "react-icons/fa";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "../Firebase";
+import { db, functions } from "../Firebase";
+import { httpsCallable } from "firebase/functions";
 import { toast } from "react-toastify";
 
 const Cart = () => {
@@ -15,6 +16,7 @@ const Cart = () => {
     phone: "",
   });
   const [loading, setLoading] = useState(false);
+  const [cryptoLoading, setCryptoLoading] = useState(false);
   const navigate = useNavigate();
 
   const totalPrice = cart.reduce(
@@ -22,7 +24,6 @@ const Cart = () => {
     0
   );
 
-  // Check if all guest details fields are filled
   const isFormComplete =
     guestDetails.email &&
     guestDetails.name &&
@@ -34,17 +35,15 @@ const Cart = () => {
     setGuestDetails((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Validate email format
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // Separate async function to handle order saving
-  const saveOrderToFirestore = async (response) => {
+  const saveOrderToFirestore = async (transactionRef) => {
     try {
       await addDoc(collection(db, "lumixing-orders"), {
-        transactionRef: response.reference,
+        transactionRef,
         cartItems: cart.map((item) => ({
           id: item.id,
           name: item.title,
@@ -52,7 +51,7 @@ const Cart = () => {
           price: item.price,
           selectedColor: item.color,
         })),
-        totalAmount: totalPrice,
+        totalAmount: totalPrice, // Stored in USD
         customer: {
           email: guestDetails.email,
           name: guestDetails.name,
@@ -62,12 +61,11 @@ const Cart = () => {
         createdAt: serverTimestamp(),
         status: "confirmed",
       });
-      // Save email to localStorage
       localStorage.setItem("userEmail", guestDetails.email);
     } catch (error) {
       console.error("Error saving order to Firestore:", error);
       toast.error("Failed to save order. Please contact support.");
-      throw error; // Re-throw to handle in callback
+      throw error;
     }
   };
 
@@ -77,7 +75,6 @@ const Cart = () => {
       return;
     }
 
-    // Validate guest details and email
     if (!isFormComplete) {
       toast.error("Please fill in all checkout details.");
       return;
@@ -90,12 +87,15 @@ const Cart = () => {
 
     setLoading(true);
 
+    const exchangeRate = 15.625; // 1 USD = 15.625 GHS (replace with real-time API)
+    const ghsAmount = (totalPrice * exchangeRate * 100).toFixed(0); // Paystack expects amount in kobo (cents)
+
     const paystack = window.PaystackPop.setup({
       key:
         process.env.REACT_APP_PAYSTACK_PUBLIC_KEY ||
         "pk_test_d3834e4345d6c4535860bde88c00b25760e86fb1",
       email: guestDetails.email,
-      amount: totalPrice * 100, // Paystack expects amount in kobo (GHS * 100)
+      amount: ghsAmount,
       currency: "GHS",
       ref: `LUMIXING_${Math.floor(Math.random() * 1000000000)}`,
       metadata: {
@@ -114,8 +114,7 @@ const Cart = () => {
         },
       },
       callback: function (response) {
-        // Handle payment success
-        saveOrderToFirestore(response)
+        saveOrderToFirestore(response.reference)
           .then(() => {
             clearCart();
             setGuestDetails({ email: "", name: "", location: "", phone: "" });
@@ -138,6 +137,60 @@ const Cart = () => {
     paystack.openIframe();
   };
 
+  const handleCryptoCheckout = async () => {
+    if (!isFormComplete) {
+      toast.error("Please fill in all checkout details.");
+      return;
+    }
+
+    if (!validateEmail(guestDetails.email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    setCryptoLoading(true);
+
+    try {
+      const usdAmount = totalPrice.toFixed(2); // Already in USD
+      const metadata = {
+        cartItems: cart.map((item) => ({
+          id: item.id,
+          name: item.title,
+          quantity: item.quantity,
+          price: item.price,
+          selectedColor: item.color,
+        })),
+        customer: {
+          email: guestDetails.email,
+          name: guestDetails.name,
+          location: guestDetails.location,
+          phone: guestDetails.phone,
+        },
+      };
+      console.log("Sending to createCharge:", { amount: usdAmount, metadata });
+      const createCharge = httpsCallable(functions, "createCharge");
+      const result = await createCharge({ amount: usdAmount, metadata });
+
+      const chargeData = result.data.data; // Access nested data
+      console.log("Coinbase API Response:", chargeData);
+      if (chargeData && chargeData.hosted_url) {
+        await saveOrderToFirestore(chargeData.code);
+        clearCart();
+        setGuestDetails({ email: "", name: "", location: "", phone: "" });
+        toast.success("Crypto payment initiated! Redirecting to Coinbase...");
+        window.location.href = chargeData.hosted_url;
+      } else {
+        console.error("No hosted_url in response:", chargeData);
+        toast.error("Failed to create crypto payment. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error creating Coinbase charge:", error);
+      toast.error(`Error initiating crypto payment: ${error.message}`);
+    } finally {
+      setCryptoLoading(false);
+    }
+  };
+
   return (
     <section className="py-16 bg-gray-100 min-h-screen">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -156,7 +209,6 @@ const Cart = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-2xl shadow-xl p-6">
                 <ul className="divide-y divide-gray-200">
@@ -178,9 +230,8 @@ const Cart = () => {
                           Color: {item.color}
                         </p>
                         <p className="text-sm font-medium text-gray-900">
-                          Price: ₵{(item.price * item.quantity).toFixed(2)}
+                          Price: ${(item.price * item.quantity).toFixed(2)}
                         </p>
-                        {/* Quantity Controls */}
                         <div className="flex items-center gap-3 mt-2">
                           <button
                             onClick={() =>
@@ -215,7 +266,6 @@ const Cart = () => {
                   ))}
                 </ul>
               </div>
-              {/* Checkout Details */}
               <div className="mt-6 bg-white rounded-2xl shadow-xl p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
                   Checkout Details
@@ -280,7 +330,6 @@ const Cart = () => {
                 </div>
               </div>
             </div>
-            {/* Cart Summary */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl shadow-xl p-6 sticky top-4">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
@@ -288,7 +337,7 @@ const Cart = () => {
                 </h2>
                 <div className="flex justify-between text-sm text-gray-600 mb-2">
                   <span>Subtotal</span>
-                  <span>₵{totalPrice.toFixed(2)}</span>
+                  <span>${totalPrice.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600 mb-4">
                   <span>Shipping</span>
@@ -296,12 +345,16 @@ const Cart = () => {
                 </div>
                 <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-200 pt-4">
                   <span>Total</span>
-                  <span>₵{totalPrice.toFixed(2)}</span>
+                  <span>${totalPrice.toFixed(2)}</span>
                 </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Paystack payments processed in GHS (≈₵
+                  {(totalPrice * 15.625).toFixed(2)})
+                </p>
                 <button
                   onClick={handleCheckout}
                   className="mt-6 block w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-center font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  disabled={loading || !isFormComplete}
+                  disabled={loading || cryptoLoading || !isFormComplete}
                 >
                   {loading ? (
                     <>
@@ -310,6 +363,20 @@ const Cart = () => {
                     </>
                   ) : (
                     "Proceed to Checkout"
+                  )}
+                </button>
+                <button
+                  onClick={handleCryptoCheckout}
+                  className="mt-4 block w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-center font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  disabled={loading || cryptoLoading || !isFormComplete}
+                >
+                  {cryptoLoading ? (
+                    <>
+                      <FaSpinner className="animate-spin w-5 h-5 mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Pay with Crypto"
                   )}
                 </button>
               </div>

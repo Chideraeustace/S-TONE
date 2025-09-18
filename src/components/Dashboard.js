@@ -714,7 +714,7 @@ const Dashboard = () => {
                     htmlFor="price"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Price ($)
+                    Price (USD)
                   </label>
                   <input
                     type="number"
@@ -724,12 +724,12 @@ const Dashboard = () => {
                       editingProduct ? editingProduct.price : newProduct.price
                     }
                     onChange={handleProductInputChange}
-                    placeholder="Enter price (e.g., 999.99)"
+                    placeholder="Enter price in USD (e.g., 999.99)"
                     step="0.01"
                     min="0"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     required
-                    aria-label="Product Price"
+                    aria-label="Product Price in USD"
                   />
                 </div>
                 <div>
@@ -852,7 +852,7 @@ const Dashboard = () => {
                         Category
                       </th>
                       <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Price ($)
+                        Price (USD)
                       </th>
                       <th className="p-4 text-left text-sm font-semibold text-gray-700">
                         Quantity
@@ -904,6 +904,11 @@ const Dashboard = () => {
                             {product.price
                               ? `$${product.price.toFixed(2)}`
                               : "N/A"}
+                            {/* If Firestore prices are in GHS, convert to USD:
+                            {product.price
+                              ? `$${(product.price * 0.064).toFixed(2)}`
+                              : "N/A"}
+                            */}
                           </td>
                           <td className="p-4 text-gray-800">
                             {product.quantity ?? "N/A"}

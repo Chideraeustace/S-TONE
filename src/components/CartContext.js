@@ -20,12 +20,15 @@ export const CartProvider = ({ children }) => {
     if (product?.quantity === 0 || !selectedColor || selectedQuantity < 1) {
       return;
     }
+    // Assume product.price is in USD; if Firestore prices are in GHS, convert:
+    // const exchangeRate = 0.064; // 1 GHS = 0.064 USD
+    // const usdPrice = product.price * exchangeRate;
     const cartItem = {
       id: product.id,
       title: product.title,
       color: selectedColor,
       quantity: selectedQuantity,
-      price: product.price,
+      price: product.price, // Price in USD
       imageUrl: product.imageUrl,
     };
     setCart((prevCart) => {
@@ -42,7 +45,11 @@ export const CartProvider = ({ children }) => {
       return [...prevCart, cartItem];
     });
     console.log(
-      `Added to cart: ${product.title}, Color: ${selectedColor}, Quantity: ${selectedQuantity}`
+      `Added to cart: ${
+        product.title
+      }, Color: ${selectedColor}, Quantity: ${selectedQuantity}, Price: $${product.price.toFixed(
+        2
+      )}`
     );
   };
 

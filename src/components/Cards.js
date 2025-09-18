@@ -140,8 +140,13 @@ const Cards = () => {
                     {product.description}
                   </p>
                   <p className="text-gray-600 text-sm sm:text-base mb-4">
-                    ₵{product.price ? product.price.toFixed(2) : "N/A"}
+                    ${product.price ? product.price.toFixed(2) : "N/A"}
                   </p>
+                  {/* If Firestore prices are in GHS, convert to USD here:
+                  <p className="text-gray-600 text-sm sm:text-base mb-4">
+                    ${(product.price ? (product.price * 0.064).toFixed(2) : "N/A")}
+                  </p>
+                  */}
                   <Link
                     to={`/product-details/${product.id}`}
                     className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base hover:bg-blue-700 transition-colors duration-200"

@@ -73,12 +73,15 @@ const PromoCards = () => {
             const category = categories.find(
               (c) => c.id === product.categoryId
             );
+            // If Firestore prices are in GHS, convert to USD here:
+            // const exchangeRate = 0.064; // 1 GHS = 0.064 USD
+            // const usdPrice = product.price ? (product.price * exchangeRate).toFixed(2) : "N/A";
 
             return (
               <Link
                 key={product.id}
                 to={`/product-details/${product.id}`}
-                className="bg-white rounded-xl overflow-hidden transform transition-all duration-300 hover:-translate-y-2 flex flex-row hover:bg-gray-50" // whole card clickable
+                className="bg-white rounded-xl overflow-hidden transform transition-all duration-300 hover:-translate-y-2 flex flex-row hover:bg-gray-50"
                 data-aos="fade-up"
                 data-aos-delay={index * 100}
               >
@@ -108,7 +111,7 @@ const PromoCards = () => {
                     <p className="text-gray-800 text-base font-semibold mb-3">
                       Price:{" "}
                       <span className="text-blue-600">
-                        ₵{product.price ? product.price.toFixed(2) : "N/A"}
+                        ${product.price ? product.price.toFixed(2) : "N/A"}
                       </span>
                     </p>
                     <div className="flex items-center text-sm sm:text-base mb-3 sm:mb-4">

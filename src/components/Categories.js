@@ -148,8 +148,13 @@ const Category = () => {
                     {product.description}
                   </p>
                   <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3">
-                    ₵{product.price ? product.price.toFixed(2) : "N/A"}
+                    ${product.price ? product.price.toFixed(2) : "N/A"}
                   </p>
+                  {/* If Firestore prices are in GHS, convert to USD here:
+                  <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3">
+                    ${(product.price ? (product.price * 0.064).toFixed(2) : "N/A")}
+                  </p>
+                  */}
                   <div className="flex items-center text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3">
                     <svg
                       className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mr-1 sm:mr-2"

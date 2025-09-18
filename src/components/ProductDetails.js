@@ -131,8 +131,13 @@ const ProductDetails = () => {
                 {product.title}
               </h1>
               <p className="text-2xl font-bold text-blue-600 mb-4">
-                ₵{product.price.toFixed(2)}
+                ${product.price.toFixed(2)}
               </p>
+              {/* If Firestore prices are in GHS, convert to USD here:
+              <p className="text-2xl font-bold text-blue-600 mb-4">
+                ${(product.price * 0.064).toFixed(2)}
+              </p>
+              */}
               <p className="text-gray-700 text-base leading-relaxed mb-6">
                 {product.description}
               </p>
