@@ -15,6 +15,7 @@ import {
   BiChevronDown,
 } from "react-icons/bi";
 import { useCart } from "./CartContext";
+import image1 from "../assets/logo.jpg"
 
 const Header = () => {
   const [currencyOpen, setCurrencyOpen] = useState(false);
@@ -146,9 +147,17 @@ const Header = () => {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center">
             <img
-              src="/assets/img/apple-logo.png"
+              src={image1}
               alt="Lumixing"
-              className="h-8 transition-transform hover:scale-105"
+              className="
+    h-12 w-auto           
+    rounded-lg                       
+    transition-all 
+    duration-300 
+    ease-in-out 
+    hover:scale-110       
+    hover:shadow-xl       
+  "
             />
           </Link>
           <div
