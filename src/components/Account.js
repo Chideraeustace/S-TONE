@@ -187,7 +187,7 @@ const Account = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ₵{order.totalAmount?.toFixed(2) || "0.00"}
+                        ${order.totalAmount?.toFixed(2) || "0.00"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {order.cartItems?.length || 0} items

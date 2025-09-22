@@ -111,7 +111,9 @@ const Header = () => {
                 effect="slide"
                 className="h-8 text-sm lg:text-base text-gray-700"
               >
-                <SwiperSlide>🚚 Free shipping on orders!!!</SwiperSlide>
+                <SwiperSlide>
+                  Lumixing | Smart Devices & Gadgets!!!
+                </SwiperSlide>
                 <SwiperSlide>
                   📱 Pre-order iPhone 17 now, get it delivered to you!!!
                 </SwiperSlide>
