@@ -574,7 +574,7 @@ const Header = () => {
                   onClick={() => setAndroidMenuOpen(!androidMenuOpen)}
                   className="flex items-center text-gray-700 hover:text-blue-600 text-base transition-colors"
                 >
-                  Galaxy S <BiChevronDown className="ml-1 text-lg" />
+                  Samsungs <BiChevronDown className="ml-1 text-lg" />
                 </button>
                 <div
                   className={`mobile-megamenu block xl:hidden max-h-96 overflow-y-auto bg-white shadow-lg rounded-lg mt-2 ${
@@ -891,7 +891,7 @@ const Header = () => {
                       : "text-gray-700 hover:text-blue-600 text-base transition-colors"
                   }
                 >
-                  Shop
+                  Store
                 </NavLink>
               </li>
               <li>

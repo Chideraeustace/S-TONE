@@ -19,10 +19,15 @@ const Cart = () => {
   const [cryptoLoading, setCryptoLoading] = useState(false);
   const navigate = useNavigate();
 
-  const totalPrice = cart.reduce(
+  const subtotal = cart.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
+  const exchangeRate = 15.625; // 1 USD = 15.625 GHS
+  const shippingFeeGHS = 100; // Fixed shipping fee in GHS
+  const subtotalGHS = subtotal * exchangeRate; // Convert subtotal to GHS
+  const totalPriceGHS = subtotalGHS + shippingFeeGHS; // Total including shipping in GHS
+  const totalPriceUSD = subtotal + shippingFeeGHS / exchangeRate; // Total including shipping in USD
 
   const isFormComplete =
     guestDetails.email &&
@@ -40,6 +45,20 @@ const Cart = () => {
     return emailRegex.test(email);
   };
 
+  const checkMinimumAmount = () => {
+    const userType = localStorage.getItem("userType");
+    const minimumAmountGHS = userType === "business" ? 7000 : 4000;
+    if (totalPriceGHS < minimumAmountGHS) {
+      toast.error(
+        `Minimum order amount for ${userType} users is ₵${minimumAmountGHS}. Your current total (including shipping) is ₵${totalPriceGHS.toFixed(
+          2
+        )}.`
+      );
+      return false;
+    }
+    return true;
+  };
+
   const saveOrderToFirestore = async (transactionRef) => {
     try {
       await addDoc(collection(db, "lumixing-orders"), {
@@ -51,7 +70,9 @@ const Cart = () => {
           price: item.price,
           selectedColor: item.color,
         })),
-        totalAmount: totalPrice, // Stored in USD
+        subtotal: subtotal, // Stored in USD
+        shippingFee: shippingFeeGHS / exchangeRate, // Stored in USD
+        totalAmount: totalPriceUSD, // Stored in USD
         customer: {
           email: guestDetails.email,
           name: guestDetails.name,
@@ -85,10 +106,13 @@ const Cart = () => {
       return;
     }
 
+    if (!checkMinimumAmount()) {
+      return;
+    }
+
     setLoading(true);
 
-    const exchangeRate = 15.625; // 1 USD = 15.625 GHS (replace with real-time API)
-    const ghsAmount = (totalPrice * exchangeRate * 100).toFixed(0); // Paystack expects amount in kobo (cents)
+    const ghsAmount = (totalPriceGHS * 100).toFixed(0); // Paystack expects amount in kobo (cents)
 
     const paystack = window.PaystackPop.setup({
       key:
@@ -112,6 +136,7 @@ const Cart = () => {
           location: guestDetails.location,
           phone: guestDetails.phone,
         },
+        shippingFee: shippingFeeGHS / exchangeRate, // Include shipping in metadata
       },
       callback: function (response) {
         saveOrderToFirestore(response.reference)
@@ -148,10 +173,14 @@ const Cart = () => {
       return;
     }
 
+    if (!checkMinimumAmount()) {
+      return;
+    }
+
     setCryptoLoading(true);
 
     try {
-      const usdAmount = totalPrice.toFixed(2); // Already in USD
+      const usdAmount = totalPriceUSD.toFixed(2); // Total including shipping in USD
       const metadata = {
         cartItems: cart.map((item) => ({
           id: item.id,
@@ -166,6 +195,7 @@ const Cart = () => {
           location: guestDetails.location,
           phone: guestDetails.phone,
         },
+        shippingFee: shippingFeeGHS / exchangeRate, // Include shipping in metadata
       };
       console.log("Sending to createCharge:", { amount: usdAmount, metadata });
       const createCharge = httpsCallable(functions, "createCharge");
@@ -174,7 +204,6 @@ const Cart = () => {
       const chargeData = result.data.data; // Access nested data
       console.log("Coinbase API Response:", chargeData);
       if (chargeData && chargeData.hosted_url) {
-        await saveOrderToFirestore(chargeData.code);
         clearCart();
         setGuestDetails({ email: "", name: "", location: "", phone: "" });
         toast.success("Crypto payment initiated! Redirecting to Coinbase...");
@@ -337,19 +366,19 @@ const Cart = () => {
                 </h2>
                 <div className="flex justify-between text-sm text-gray-600 mb-2">
                   <span>Subtotal</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                  <span>${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600 mb-4">
                   <span>Shipping</span>
-                  <span>Free</span>
+                  <span>₵{shippingFeeGHS.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-200 pt-4">
                   <span>Total</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                  <span>${totalPriceUSD.toFixed(2)}</span>
                 </div>
                 <p className="text-sm text-gray-600 mt-2">
                   Paystack payments processed in GHS (≈₵
-                  {(totalPrice * 15.625).toFixed(2)})
+                  {totalPriceGHS.toFixed(2)})
                 </p>
                 <button
                   onClick={handleCheckout}

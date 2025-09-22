@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { CartProvider } from "./components/CartContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -15,10 +15,14 @@ import Category from "./components/Categories";
 import ProductDetails from "./components/ProductDetails";
 import Cart from "./components/Carts";
 import Checkout from "./components/Checkout";
-import Contact from "./components/contact";
-import Account from "./components/Account";
-import Login from "./components/Login";
 import OrderConfirmation from "./components/OrderConfirmation";
+import Login from "./components/Login";
+import Account from "./components/Account";
+
+const ProtectedRoute = ({ children }) => {
+  const userType = localStorage.getItem("userType");
+  return userType ? children : <Navigate to="/login" />;
+};
 
 function App({ categories }) {
   return (
@@ -27,37 +31,88 @@ function App({ categories }) {
         <Header />
         <main className="flex-grow">
           <Routes>
+            <Route path="/login" element={<Login />} />
             <Route
               path="/"
               element={
-                <>
-                  <Hero />
-                  <PromoCards />
-                  <BestSellers />
-                  <Cards />
-                  <CallToAction />
-                </>
+                <ProtectedRoute>
+                  <>
+                    <Hero />
+                    <PromoCards />
+                    <BestSellers />
+                    <Cards />
+                    <CallToAction />
+                  </>
+                </ProtectedRoute>
               }
             />
-            <Route path="/category" element={<Category />} />
-            <Route path="/about" element={<About />} />
+            <Route
+              path="/category"
+              element={
+                <ProtectedRoute>
+                  <Category />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <ProtectedRoute>
+                  <About />
+                </ProtectedRoute>
+              }
+            />
             {categories.map((category) => (
               <Route
                 key={category.id}
                 path={category.url}
-                element={<Category />}
+                element={
+                  <ProtectedRoute>
+                    <Category />
+                  </ProtectedRoute>
+                }
               />
             ))}
             <Route
               path="/product-details/:productId"
-              element={<ProductDetails />}
+              element={
+                <ProtectedRoute>
+                  <ProductDetails />
+                </ProtectedRoute>
+              }
             />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            <Route
+              path="/cart"
+              element={
+                <ProtectedRoute>
+                  <Cart />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/checkout"
+              element={
+                <ProtectedRoute>
+                  <Checkout />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/order-confirmation"
+              element={
+                <ProtectedRoute>
+                  <OrderConfirmation />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <ProtectedRoute>
+                  <Account/>
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </main>
         <Footer />

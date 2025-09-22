@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "login-60ced"
-  }
+    "default": "login-60ced",
+    "prod": "login-60ced"
+  },
+  "targets": {},
+  "etags": {}
 }

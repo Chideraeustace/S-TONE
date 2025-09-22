@@ -45,9 +45,9 @@ const PromoCards = () => {
 
   if (loading) {
     return (
-      <section className="py-16 lg:py-20 bg-gradient-to-b from-white to-gray-50">
-        <div className="container mx-auto px-6">
-          <p className="text-gray-700 font-medium text-lg">Loading...</p>
+      <section className="py-12 lg:py-16 bg-gradient-to-b from-white to-gray-50">
+        <div className="container mx-auto px-4">
+          <p className="text-gray-700 font-medium text-base">Loading...</p>
         </div>
       </section>
     );
@@ -55,69 +55,66 @@ const PromoCards = () => {
 
   if (error) {
     return (
-      <section className="py-16 lg:py-20 bg-gradient-to-b from-white to-gray-50">
-        <div className="container mx-auto px-6">
-          <p className="text-red-600 font-semibold text-lg">{error}</p>
+      <section className="py-12 lg:py-16 bg-gradient-to-b from-white to-gray-50">
+        <div className="container mx-auto px-4">
+          <p className="text-red-600 font-semibold text-base">{error}</p>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="py-16 lg:py-20 bg-gradient-to-b from-white to-gray-50">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 gap-8">
+    <section className="py-12 lg:py-16 bg-gradient-to-b from-white to-gray-50">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-1">
           {products.map((product, index) => {
             const verificationYears = getRandomVerificationYears();
             const minOrders = getRandomMinOrders();
             const category = categories.find(
               (c) => c.id === product.categoryId
             );
-            // If Firestore prices are in GHS, convert to USD here:
-            // const exchangeRate = 0.064; // 1 GHS = 0.064 USD
-            // const usdPrice = product.price ? (product.price * exchangeRate).toFixed(2) : "N/A";
 
             return (
               <Link
                 key={product.id}
                 to={`/product-details/${product.id}`}
-                className="bg-white rounded-xl overflow-hidden transform transition-all duration-300 hover:-translate-y-2 flex flex-row hover:bg-gray-50"
+                className="bg-white rounded-lg overflow-hidden transform transition-all duration-300 hover:-translate-y-1 flex flex-col sm:flex-row md:flex-row hover:bg-gray-50"
                 data-aos="fade-up"
                 data-aos-delay={index * 100}
               >
                 {/* Image Section */}
-                <div className="w-1/3 flex items-center justify-center bg-gray-50">
+                <div className="w-full sm:w-1/3 flex items-center justify-center bg-gray-50">
                   <img
                     src={product.imageUrl}
                     alt={product.title}
-                    className="w-full h-48 object-contain"
+                    className="w-full h-32 sm:h-40 object-contain"
                   />
                 </div>
 
                 {/* Text Section */}
-                <div className="p-5 w-2/3 flex flex-col justify-between">
+                <div className="p-3 sm:p-4 w-full sm:w-2/3 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
-                      <FaTag className="text-blue-600 mr-2" />
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 flex items-center">
+                      <FaTag className="text-blue-600 mr-1.5 w-4 h-4" />
                       <span>{product.title}</span>
                     </h3>
 
                     {category && (
-                      <p className="text-sm text-gray-500 mb-3 font-medium tracking-wide">
+                      <p className="text-xs sm:text-sm text-gray-500 mb-2 font-medium tracking-wide">
                         {category.name}
                       </p>
                     )}
 
-                    <p className="text-gray-800 text-base font-semibold mb-3">
+                    <p className="text-gray-800 text-sm sm:text-base font-semibold mb-2">
                       Price:{" "}
                       <span className="text-blue-600">
                         ${product.price ? product.price.toFixed(2) : "N/A"}
                       </span>
                     </p>
-                    <div className="flex items-center text-sm sm:text-base mb-3 sm:mb-4">
-                      <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                    <div className="flex items-center text-xs sm:text-sm mb-2">
+                      <span className="inline-flex items-center px-1.5 py-0.5 bg-green-100 text-green-800 rounded-full">
                         <svg
-                          className="w-5 h-5 mr-1.5"
+                          className="w-4 h-4 mr-1"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -134,9 +131,9 @@ const PromoCards = () => {
                       </span>
                     </div>
 
-                    <div className="flex items-center mb-3 text-sm text-gray-700">
+                    <div className="flex items-center mb-2 text-xs sm:text-sm text-gray-700">
                       <svg
-                        className="w-5 h-5 text-green-600 mr-2"
+                        className="w-4 h-4 text-green-600 mr-1"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -154,7 +151,7 @@ const PromoCards = () => {
                       </span>
                     </div>
 
-                    <p className="text-gray-700 text-sm font-medium">
+                    <p className="text-gray-700 text-xs sm:text-sm font-medium">
                       {minOrders} Sold
                     </p>
                   </div>
