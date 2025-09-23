@@ -6,7 +6,7 @@ import "swiper/css/pagination";
 import { BiSolidTruck, BiAward, BiHeadphone } from "react-icons/bi";
 import image1 from "../assets/i7series.jpg";
 import image2 from "../assets/24.jpg";
-import image3 from "../assets/air.jpg";
+import image3 from "../assets/macbook.jpg";
 
 const Hero = () => {
   const slides = [
@@ -85,7 +85,7 @@ const Hero = () => {
                   >
                     <div className="flex items-center text-gray-700 hover:text-blue-600 transition-colors duration-200">
                       <BiSolidTruck className="mr-2 text-xl" />
-                      Free Shipping
+                      Flat Shipping Rate 
                     </div>
                     <div className="flex items-center text-gray-700 hover:text-blue-600 transition-colors duration-200">
                       <BiAward className="mr-2 text-xl" />

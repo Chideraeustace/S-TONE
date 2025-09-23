@@ -37,9 +37,8 @@ const Dashboard = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [editingCategory, setEditingCategory] = useState(null);
-  const [activeTab, setActiveTab] = useState("products"); // State for active tab
+  const [activeTab, setActiveTab] = useState("products");
 
-  // Clean up image preview URLs to prevent memory leaks
   useEffect(() => {
     return () => {
       if (newProduct.imagePreview) {
@@ -51,7 +50,6 @@ const Dashboard = () => {
     };
   }, [newProduct.imagePreview, editingProduct?.imagePreview]);
 
-  // Fetch products, orders, and categories from Firestore
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -91,7 +89,6 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  // Handle product form input changes
   const handleProductInputChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "imageFile") {
@@ -143,7 +140,6 @@ const Dashboard = () => {
     }
   };
 
-  // Remove selected image
   const handleRemoveImage = () => {
     if (editingProduct) {
       if (editingProduct.imagePreview) {
@@ -162,7 +158,6 @@ const Dashboard = () => {
     }
   };
 
-  // Handle category form input changes
   const handleCategoryInputChange = (e) => {
     const { value } = e.target;
     if (editingCategory) {
@@ -176,13 +171,11 @@ const Dashboard = () => {
     }
   };
 
-  // Add or update product
   const handleProductSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
 
-    // Validate inputs
     const product = editingProduct || newProduct;
     if (
       !product.title ||
@@ -223,7 +216,6 @@ const Dashboard = () => {
 
     setLoading(true);
     try {
-      // Prepare product data
       const productData = {
         title: product.title,
         description: product.description,
@@ -240,7 +232,6 @@ const Dashboard = () => {
         createdAt: new Date(),
       };
 
-      // Handle image upload
       let imageUrl = editingProduct ? editingProduct.imageUrl : "";
       if (product.imageFile) {
         const fileExtension = product.imageFile.name.split(".").pop();
@@ -260,7 +251,6 @@ const Dashboard = () => {
           throw new Error("Failed to retrieve image URL.");
         }
 
-        // Delete old image if editing and new image is uploaded
         if (
           editingProduct &&
           editingProduct.imageUrl &&
@@ -274,7 +264,6 @@ const Dashboard = () => {
           }
         }
       } else if (editingProduct && imageUrl) {
-        // Keep existing imageUrl if no new file is selected
         imageUrl = editingProduct.imageUrl;
       } else {
         setError("Please upload an image.");
@@ -303,7 +292,6 @@ const Dashboard = () => {
         setSuccess("Product added successfully!");
       }
 
-      // Reset form and clean up preview
       if (product.imagePreview) {
         URL.revokeObjectURL(product.imagePreview);
       }
@@ -332,7 +320,6 @@ const Dashboard = () => {
     }
   };
 
-  // Delete product
   const handleProductDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
@@ -357,7 +344,6 @@ const Dashboard = () => {
     }
   };
 
-  // Start editing a product
   const handleProductEdit = (product) => {
     setEditingProduct({
       ...product,
@@ -370,7 +356,6 @@ const Dashboard = () => {
     });
   };
 
-  // Add or update category
   const handleCategorySubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -423,7 +408,6 @@ const Dashboard = () => {
     }
   };
 
-  // Delete category
   const handleCategoryDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this category?")) {
       try {
@@ -449,13 +433,11 @@ const Dashboard = () => {
     }
   };
 
-  // Start editing a category
   const handleCategoryEdit = (category) => {
     setEditingCategory(category);
     setNewCategoryName(category.name);
   };
 
-  // Get category details by ID
   const getCategoryDetails = (categoryId) => {
     const category = categories.find((cat) => cat.id === categoryId);
     return category
@@ -463,7 +445,6 @@ const Dashboard = () => {
       : { name: "Unknown", url: "#" };
   };
 
-  // Check if selected category is "iPhone" or "Android"
   const isSmartphoneCategory = (categoryId) => {
     const category = categories.find((cat) => cat.id === categoryId);
     return (
@@ -472,6 +453,25 @@ const Dashboard = () => {
         category.name.toLowerCase()
       )
     );
+  };
+
+  // Format timestamp to readable date
+  const formatDate = (timestamp) => {
+    if (!timestamp) return "N/A";
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
+
+  // Determine payment type
+  const getPaymentType = (order) => {
+    return order.chargeId && order.hostedUrl ? "Crypto" : "Regular";
   };
 
   if (loading) {
@@ -489,7 +489,6 @@ const Dashboard = () => {
           Admin Dashboard
         </h1>
 
-        {/* Success/Error Messages */}
         {success && (
           <div className="mb-6 p-4 bg-green-100 text-green-800 rounded-lg shadow-md flex items-center">
             <svg
@@ -527,7 +526,6 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Tabs Navigation */}
         <div className="mb-8">
           <div
             className="flex space-x-4 overflow-x-auto sm:justify-center"
@@ -575,9 +573,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Tab Content */}
         <div className="sm:block">
-          {/* Products Tab */}
           <div
             id="products-panel"
             role="tabpanel"
@@ -585,7 +581,6 @@ const Dashboard = () => {
               activeTab === "products" ? "block" : "hidden sm:block"
             }`}
           >
-            {/* Product Management Section */}
             <section className="bg-white p-6 rounded-xl shadow-lg mb-8">
               <h2 className="text-2xl font-semibold text-gray-800 mb-6">
                 {editingProduct ? "Edit Product" : "Add New Product"}
@@ -830,7 +825,6 @@ const Dashboard = () => {
               </form>
             </section>
 
-            {/* Product List Section */}
             <section className="bg-white p-6 rounded-xl shadow-lg mb-8">
               <h2 className="text-2xl font-semibold text-gray-800 mb-6">
                 Manage Products
@@ -904,11 +898,6 @@ const Dashboard = () => {
                             {product.price
                               ? `$${product.price.toFixed(2)}`
                               : "N/A"}
-                            {/* If Firestore prices are in GHS, convert to USD:
-                            {product.price
-                              ? `$${(product.price * 0.064).toFixed(2)}`
-                              : "N/A"}
-                            */}
                           </td>
                           <td className="p-4 text-gray-800">
                             {product.quantity ?? "N/A"}
@@ -942,7 +931,6 @@ const Dashboard = () => {
             </section>
           </div>
 
-          {/* Categories Tab */}
           <div
             id="categories-panel"
             role="tabpanel"
@@ -950,7 +938,6 @@ const Dashboard = () => {
               activeTab === "categories" ? "block" : "hidden sm:block"
             }`}
           >
-            {/* Category Management Section */}
             <section className="bg-white p-6 rounded-xl shadow-lg mb-8">
               <h2 className="text-2xl font-semibold text-gray-800 mb-6">
                 {editingCategory ? "Edit Category" : "Add New Category"}
@@ -1000,7 +987,6 @@ const Dashboard = () => {
               </form>
             </section>
 
-            {/* Category List Section */}
             <section className="bg-white p-6 rounded-xl shadow-lg mb-8">
               <h2 className="text-2xl font-semibold text-gray-800 mb-6">
                 Manage Categories
@@ -1057,7 +1043,6 @@ const Dashboard = () => {
             </section>
           </div>
 
-          {/* Orders Tab */}
           <div
             id="orders-panel"
             role="tabpanel"
@@ -1065,7 +1050,6 @@ const Dashboard = () => {
               activeTab === "orders" ? "block" : "hidden sm:block"
             }`}
           >
-            {/* Order Tracking Section */}
             <section className="bg-white p-6 rounded-xl shadow-lg">
               <h2 className="text-2xl font-semibold text-gray-800 mb-6">
                 Customer Orders
@@ -1078,27 +1062,214 @@ const Dashboard = () => {
                         Order ID
                       </th>
                       <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Customer Name
+                        Customer
                       </th>
                       <th className="p-4 text-left text-sm font-semibold text-gray-700">
                         Product
                       </th>
                       <th className="p-4 text-left text-sm font-semibold text-gray-700">
+                        Amount (USD)
+                      </th>
+                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
+                        Payment Type
+                      </th>
+                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
                         Status
+                      </th>
+                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
+                        Order Date
+                      </th>
+                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
+                        Details
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.map((order) => (
-                      <tr key={order.id} className="border-b hover:bg-gray-50">
-                        <td className="p-4 text-gray-800">{order.id}</td>
-                        <td className="p-4 text-gray-800">
-                          {order.customerName}
-                        </td>
-                        <td className="p-4 text-gray-800">{order.product}</td>
-                        <td className="p-4 text-gray-800">{order.status}</td>
-                      </tr>
-                    ))}
+                    {orders.map((order) => {
+                      const isCrypto = order.chargeId && order.hostedUrl;
+                      const customer = isCrypto
+                        ? order.metadata?.customer
+                        : order.customer;
+                      const cartItems = isCrypto
+                        ? order.metadata?.cartItems
+                        : order.cartItems;
+                      return (
+                        <tr
+                          key={order.id}
+                          className="border-b hover:bg-gray-50"
+                        >
+                          <td className="p-4 text-gray-800">
+                            {order.chargeId || order.transactionRef || order.id}
+                          </td>
+                          <td className="p-4 text-gray-800">
+                            {customer && customer.name ? customer.name : "N/A"}
+                          </td>
+                          <td className="p-4 text-gray-800">
+                            {cartItems &&
+                            cartItems.length > 0 &&
+                            cartItems[0].name
+                              ? cartItems[0].name
+                              : "N/A"}
+                            {cartItems &&
+                              cartItems.length > 0 &&
+                              cartItems[0].selectedColor && (
+                                <span className="text-gray-600">
+                                  {" (" + cartItems[0].selectedColor + ")"}
+                                </span>
+                              )}
+                          </td>
+                          <td className="p-4 text-gray-800">
+                            $
+                            {order.amount || order.totalAmount
+                              ? parseFloat(
+                                  order.amount || order.totalAmount
+                                ).toFixed(2)
+                              : "N/A"}
+                          </td>
+                          <td className="p-4">
+                            <span
+                              className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                                getPaymentType(order) === "Crypto"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-blue-100 text-blue-800"
+                              }`}
+                            >
+                              {getPaymentType(order)}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span
+                              className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                                order.status === "created"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : order.status === "confirmed"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {order.status || "N/A"}
+                            </span>
+                          </td>
+                          <td className="p-4 text-gray-800">
+                            {formatDate(order.createdAt)}
+                          </td>
+                          <td className="p-4">
+                            <button
+                              onClick={() =>
+                                alert(
+                                  `Order ID: ${
+                                    order.chargeId ||
+                                    order.transactionRef ||
+                                    order.id
+                                  }\n` +
+                                    `Customer Name: ${
+                                      customer && customer.name
+                                        ? customer.name
+                                        : "N/A"
+                                    }\n` +
+                                    `Email: ${
+                                      customer && customer.email
+                                        ? customer.email
+                                        : "N/A"
+                                    }\n` +
+                                    `Phone: ${
+                                      customer && customer.phone
+                                        ? customer.phone
+                                        : "N/A"
+                                    }\n` +
+                                    `Location: ${
+                                      customer && customer.location
+                                        ? customer.location
+                                        : "N/A"
+                                    }\n` +
+                                    `Product: ${
+                                      cartItems &&
+                                      cartItems.length > 0 &&
+                                      cartItems[0].name
+                                        ? cartItems[0].name
+                                        : "N/A"
+                                    }\n` +
+                                    `Product ID: ${
+                                      cartItems &&
+                                      cartItems.length > 0 &&
+                                      cartItems[0].id
+                                        ? cartItems[0].id
+                                        : "N/A"
+                                    }\n` +
+                                    `Quantity: ${
+                                      cartItems &&
+                                      cartItems.length > 0 &&
+                                      cartItems[0].quantity
+                                        ? cartItems[0].quantity
+                                        : "N/A"
+                                    }\n` +
+                                    `Color: ${
+                                      cartItems &&
+                                      cartItems.length > 0 &&
+                                      cartItems[0].selectedColor
+                                        ? cartItems[0].selectedColor
+                                        : "N/A"
+                                    }\n` +
+                                    `Product Price: $${
+                                      cartItems &&
+                                      cartItems.length > 0 &&
+                                      cartItems[0].price
+                                        ? cartItems[0].price.toFixed(2)
+                                        : "N/A"
+                                    }\n` +
+                                    `Subtotal: $${
+                                      order.subtotal
+                                        ? order.subtotal.toFixed(2)
+                                        : "N/A"
+                                    }\n` +
+                                    `Shipping Fee: $${
+                                      order.shippingFee
+                                        ? order.shippingFee.toFixed(2)
+                                        : "N/A"
+                                    }\n` +
+                                    `Total Amount: $${
+                                      order.amount || order.totalAmount
+                                        ? parseFloat(
+                                            order.amount || order.totalAmount
+                                          ).toFixed(2)
+                                        : "N/A"
+                                    }\n` +
+                                    `Order Date: ${formatDate(
+                                      order.createdAt
+                                    )}\n` +
+                                    `Webhook Received: ${
+                                      formatDate(order.webhookReceivedAt) ||
+                                      "N/A"
+                                    }\n` +
+                                    `Webhook Event: ${
+                                      order.webhookEvent || "N/A"
+                                    }\n` +
+                                    `Charge ID: ${order.chargeId || "N/A"}\n` +
+                                    `Crypto Payment URL: ${
+                                      order.hostedUrl || "N/A"
+                                    }\n` +
+                                    `Transaction Reference: ${
+                                      order.transactionRef || "N/A"
+                                    }\n` +
+                                    `Metadata: ${
+                                      order.metadata
+                                        ? JSON.stringify(
+                                            order.metadata,
+                                            null,
+                                            2
+                                          )
+                                        : "N/A"
+                                    }`
+                                )
+                              }
+                              className="text-blue-600 hover:underline font-medium"
+                            >
+                              View Details
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -15,7 +15,6 @@ import Category from "./components/Categories";
 import ProductDetails from "./components/ProductDetails";
 import Cart from "./components/Carts";
 import Checkout from "./components/Checkout";
-import OrderConfirmation from "./components/OrderConfirmation";
 import Login from "./components/Login";
 import Account from "./components/Account";
 
@@ -94,14 +93,6 @@ function App({ categories }) {
               element={
                 <ProtectedRoute>
                   <Checkout />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/order-confirmation"
-              element={
-                <ProtectedRoute>
-                  <OrderConfirmation />
                 </ProtectedRoute>
               }
             />
