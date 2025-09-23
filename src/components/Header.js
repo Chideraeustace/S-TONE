@@ -94,10 +94,10 @@ const Header = () => {
                 Need help? Call us:{" "}
               </span>
               <a
-                href="tel:+1800-275-2273"
+                href="tel:+8613527956171"
                 className="ml-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
               >
-                +233 540 000 982
+                +8613527956171
               </a>
             </div>
             <div className="text-center w-full lg:w-auto">
@@ -111,9 +111,7 @@ const Header = () => {
                 effect="slide"
                 className="h-8 text-sm lg:text-base text-gray-700"
               >
-                <SwiperSlide>
-                  Lumixing | Smart Devices & Gadgets!!!
-                </SwiperSlide>
+                <SwiperSlide>Lumixing | Smart Devices & Gadgets!!!</SwiperSlide>
                 <SwiperSlide>
                   📱 Pre-order iPhone 17 now, get it delivered to you!!!
                 </SwiperSlide>

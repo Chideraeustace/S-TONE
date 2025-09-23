@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../Firebase";
-import { FaShoppingCart, FaSpinner } from "react-icons/fa";
+import { FaShoppingCart} from "react-icons/fa";
 import { useCart } from "./CartContext"; // Import the useCart hook
 
 const ProductDetails = () => {
@@ -80,8 +80,8 @@ const ProductDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <FaSpinner className="animate-spin h-12 w-12 text-blue-600" />
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
       </div>
     );
   }

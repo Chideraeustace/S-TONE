@@ -837,78 +837,51 @@ const Dashboard = () => {
                         Title
                       </th>
                       <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Description
-                      </th>
-                      <th className="p-4 text-left text-sm font-medium text-gray-700">
-                        Image
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Category
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Price (USD)
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Quantity
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Colors
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Storage
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
                         Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {products.map((product) => {
-                      const { name, url } = getCategoryDetails(
-                        product.categoryId
-                      );
+                      const { name } = getCategoryDetails(product.categoryId);
                       return (
                         <tr
                           key={product.id}
                           className="border-b hover:bg-gray-50"
                         >
                           <td className="p-4 text-gray-800">{product.title}</td>
-                          <td className="p-4 text-gray-800">
-                            {product.description}
-                          </td>
                           <td className="p-4">
-                            <a
-                              href={product.imageUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline"
+                            <button
+                              onClick={() =>
+                                alert(
+                                  `Product ID: ${product.id}\n` +
+                                    `Title: ${product.title}\n` +
+                                    `Description: ${product.description}\n` +
+                                    `Image URL: ${
+                                      product.imageUrl || "N/A"
+                                    }\n` +
+                                    `Category: ${name}\n` +
+                                    `Price: $${
+                                      product.price
+                                        ? product.price.toFixed(2)
+                                        : "N/A"
+                                    }\n` +
+                                    `Quantity: ${product.quantity ?? "N/A"}\n` +
+                                    `Colors: ${
+                                      product.colors
+                                        ? product.colors.join(", ")
+                                        : "N/A"
+                                    }\n` +
+                                    `Storage: ${product.storage || "N/A"}\n` +
+                                    `Created At: ${formatDate(
+                                      product.createdAt
+                                    )}`
+                                )
+                              }
+                              className="text-blue-600 hover:underline mr-4 font-medium"
                             >
-                              View Image
-                            </a>
-                          </td>
-                          <td className="p-4">
-                            <Link
-                              to={url}
-                              className="text-blue-600 hover:underline"
-                            >
-                              {name}
-                            </Link>
-                          </td>
-                          <td className="p-4 text-gray-800">
-                            {product.price
-                              ? `$${product.price.toFixed(2)}`
-                              : "N/A"}
-                          </td>
-                          <td className="p-4 text-gray-800">
-                            {product.quantity ?? "N/A"}
-                          </td>
-                          <td className="p-4 text-gray-800">
-                            {product.colors ? product.colors.join(", ") : "N/A"}
-                          </td>
-                          <td className="p-4 text-gray-800">
-                            {product.storage || "N/A"}
-                          </td>
-                          <td className="p-4">
+                              View Details
+                            </button>
                             <button
                               onClick={() => handleProductEdit(product)}
                               className="text-blue-600 hover:underline mr-4 font-medium"

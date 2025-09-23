@@ -132,21 +132,24 @@ const Footer = () => {
             <ul className="space-y-4">
               <li className="flex items-center">
                 <BiPhone className="text-2xl mr-3 text-blue-400" />
-                <a href="tel:+233241234567" className="hover:underline">
-                  +233 24 123 4567
+                <a href="tel:+8613527956171" className="hover:underline">
+                  +861 352 795 6171
                 </a>
               </li>
               <li className="flex items-center">
                 <BiEnvelope className="text-2xl mr-3 text-blue-400" />
-                <a href="mailto:info@lumixing.com" className="hover:underline">
+                <a
+                  href="mailto:Lumixing.shop@gmail.com"
+                  className="hover:underline"
+                >
                   info@lumixing.com
                 </a>
               </li>
               <li className="flex items-center">
                 <BiMap className="text-2xl mr-3 text-blue-400" />
                 <span>
-                  123 Tech Lane, Kumasi,
-                  <br /> Ashanti Region, Ghana
+                  1 Zhaojiabang Road, Xuhui District .
+                  <br /> Shanghai, China
                 </span>
               </li>
             </ul>
