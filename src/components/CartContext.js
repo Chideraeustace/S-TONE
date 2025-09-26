@@ -16,8 +16,8 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  const handleAddToCart = (product, selectedColor, selectedQuantity) => {
-    if (product?.quantity === 0 || !selectedColor || selectedQuantity < 1) {
+  const handleAddToCart = (product, selectedQuantity) => {
+    if (product?.quantity === 0 || selectedQuantity < 1) {
       return;
     }
     // Assume product.price is in USD; if Firestore prices are in GHS, convert:
@@ -26,18 +26,15 @@ export const CartProvider = ({ children }) => {
     const cartItem = {
       id: product.id,
       title: product.title,
-      color: selectedColor,
       quantity: selectedQuantity,
       price: product.price, // Price in USD
       imageUrl: product.imageUrl,
     };
     setCart((prevCart) => {
-      const existingItem = prevCart.find(
-        (item) => item.id === product.id && item.color === selectedColor
-      );
+      const existingItem = prevCart.find((item) => item.id === product.id);
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === product.id && item.color === selectedColor
+          item.id === product.id
             ? { ...item, quantity: item.quantity + selectedQuantity }
             : item
         );
@@ -47,9 +44,7 @@ export const CartProvider = ({ children }) => {
     console.log(
       `Added to cart: ${
         product.title
-      }, Color: ${selectedColor}, Quantity: ${selectedQuantity}, Price: $${product.price.toFixed(
-        2
-      )}`
+      }, Quantity: ${selectedQuantity}, Price: $${product.price.toFixed(2)}`
     );
   };
 

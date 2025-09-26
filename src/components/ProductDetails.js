@@ -2,27 +2,16 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../Firebase";
-import { FaShoppingCart} from "react-icons/fa";
-import { useCart } from "./CartContext"; // Import the useCart hook
+import { FaShoppingCart } from "react-icons/fa";
+import { useCart } from "./CartContext";
 
 const ProductDetails = () => {
   const { productId } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedColor, setSelectedColor] = useState("");
   const [selectedQuantity, setSelectedQuantity] = useState(1);
-  const { handleAddToCart } = useCart(); // Use the context's handleAddToCart
-
-  const colorMap = {
-    red: "bg-red-500",
-    blue: "bg-blue-500",
-    green: "bg-green-500",
-    black: "bg-gray-800",
-    white: "bg-gray-200",
-    silver: "bg-gray-400",
-    gold: "bg-yellow-500",
-  };
+  const { handleAddToCart } = useCart();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -30,9 +19,6 @@ const ProductDetails = () => {
         const productDoc = await getDoc(doc(db, "lumixing-product", productId));
         if (productDoc.exists()) {
           const productData = { id: productDoc.id, ...productDoc.data() };
-          productData.colors = Array.isArray(productData.colors)
-            ? productData.colors
-            : [];
           productData.quantity =
             typeof productData.quantity === "number" ? productData.quantity : 0;
           productData.title =
@@ -50,7 +36,6 @@ const ProductDetails = () => {
           productData.price =
             typeof productData.price === "number" ? productData.price : 0;
           setProduct(productData);
-          setSelectedColor(productData.colors[0] || "");
           setLoading(false);
         } else {
           setError(`No product found for ID: ${productId}`);
@@ -133,11 +118,6 @@ const ProductDetails = () => {
               <p className="text-2xl font-bold text-blue-600 mb-4">
                 ${product.price.toFixed(2)}
               </p>
-              {/* If Firestore prices are in GHS, convert to USD here:
-              <p className="text-2xl font-bold text-blue-600 mb-4">
-                ${(product.price * 0.064).toFixed(2)}
-              </p>
-              */}
               <p className="text-gray-700 text-base leading-relaxed mb-6">
                 {product.description}
               </p>
@@ -156,31 +136,6 @@ const ProductDetails = () => {
                   : product.quantity <= 5
                   ? "Limited Stock"
                   : `In Stock: ${product.quantity}`}
-              </div>
-              {/* Color Selection */}
-              <div className="mb-6">
-                <label className="text-sm font-medium text-gray-900 block mb-2">
-                  Color:
-                </label>
-                <div className="flex flex-wrap gap-3">
-                  {product.colors.length > 0 ? (
-                    product.colors.map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => setSelectedColor(color)}
-                        className={`w-8 h-8 rounded-full border-2 transition-transform duration-200 transform hover:scale-110 ${
-                          selectedColor === color
-                            ? "border-blue-500 ring-2 ring-blue-500 ring-offset-2"
-                            : "border-gray-300"
-                        } ${colorMap[color.toLowerCase()] || "bg-gray-400"}`}
-                        title={color.charAt(0).toUpperCase() + color.slice(1)}
-                        disabled={product.quantity === 0}
-                      ></button>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500">No colors available</p>
-                  )}
-                </div>
               </div>
               {/* Quantity Selection */}
               <div className="mb-8">
@@ -225,17 +180,13 @@ const ProductDetails = () => {
             </div>
             {/* Add to Cart Button */}
             <button
-              onClick={() =>
-                handleAddToCart(product, selectedColor, selectedQuantity)
-              }
+              onClick={() => handleAddToCart(product, selectedQuantity)}
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-lg transition-all transform hover:scale-105 ${
-                product.quantity === 0 || !selectedColor || selectedQuantity < 1
+                product.quantity === 0 || selectedQuantity < 1
                   ? "bg-gray-400 text-gray-700 cursor-not-allowed"
                   : "bg-blue-600 text-white hover:bg-blue-700 shadow-lg"
               }`}
-              disabled={
-                product.quantity === 0 || !selectedColor || selectedQuantity < 1
-              }
+              disabled={product.quantity === 0 || selectedQuantity < 1}
               aria-label={`Add ${product.title} to cart`}
             >
               <FaShoppingCart />

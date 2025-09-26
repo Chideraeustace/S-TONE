@@ -45,20 +45,6 @@ const Cart = () => {
     return emailRegex.test(email);
   };
 
-  const checkMinimumAmount = () => {
-    const userType = localStorage.getItem("userType");
-    const minimumAmountGHS = userType === "business" ? 7000 : 4000;
-    if (totalPriceGHS < minimumAmountGHS) {
-      toast.error(
-        `Minimum order amount for ${userType} users is ₵${minimumAmountGHS}. Your current total (including shipping) is ₵${totalPriceGHS.toFixed(
-          2
-        )}.`
-      );
-      return false;
-    }
-    return true;
-  };
-
   const saveOrderToFirestore = async (transactionRef) => {
     try {
       await addDoc(collection(db, "lumixing-orders"), {
@@ -68,7 +54,6 @@ const Cart = () => {
           name: item.title,
           quantity: item.quantity,
           price: item.price,
-          selectedColor: item.color,
         })),
         subtotal: subtotal, // Stored in USD
         shippingFee: shippingFeeGHS / exchangeRate, // Stored in USD
@@ -106,10 +91,6 @@ const Cart = () => {
       return;
     }
 
-    if (!checkMinimumAmount()) {
-      return;
-    }
-
     setLoading(true);
 
     const ghsAmount = (totalPriceGHS * 100).toFixed(0); // Paystack expects amount in kobo (cents)
@@ -128,7 +109,6 @@ const Cart = () => {
           name: item.title,
           quantity: item.quantity,
           price: item.price,
-          selectedColor: item.color,
         })),
         customer: {
           email: guestDetails.email,
@@ -173,10 +153,6 @@ const Cart = () => {
       return;
     }
 
-    if (!checkMinimumAmount()) {
-      return;
-    }
-
     setCryptoLoading(true);
 
     try {
@@ -187,7 +163,6 @@ const Cart = () => {
           name: item.title,
           quantity: item.quantity,
           price: item.price,
-          selectedColor: item.color,
         })),
         customer: {
           email: guestDetails.email,
@@ -255,9 +230,6 @@ const Cart = () => {
                         <h2 className="text-lg font-semibold text-gray-900">
                           {item.title}
                         </h2>
-                        <p className="text-sm text-gray-600">
-                          Color: {item.color}
-                        </p>
                         <p className="text-sm font-medium text-gray-900">
                           Price: ${(item.price * item.quantity).toFixed(2)}
                         </p>
