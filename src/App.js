@@ -17,6 +17,7 @@ import Cart from "./components/Carts";
 import Checkout from "./components/Checkout";
 import Login from "./components/Login";
 import Account from "./components/Account";
+import Testimonials from "./components/Testimonials";
 
 const ProtectedRoute = ({ children }) => {
   const userType = localStorage.getItem("userType");
@@ -41,6 +42,7 @@ function App({ categories }) {
                     <BestSellers />
                     <Cards />
                     <CallToAction />
+                    <Testimonials/>
                   </>
                 </ProtectedRoute>
               }
