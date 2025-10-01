@@ -12,7 +12,8 @@ const Cart = () => {
   const [guestDetails, setGuestDetails] = useState({
     email: "",
     name: "",
-    location: "",
+    country: "",
+    regionCity: "",
     phone: "",
   });
   const [loading, setLoading] = useState(false);
@@ -32,7 +33,8 @@ const Cart = () => {
   const isFormComplete =
     guestDetails.email &&
     guestDetails.name &&
-    guestDetails.location &&
+    guestDetails.country &&
+    guestDetails.regionCity &&
     guestDetails.phone;
 
   const handleInputChange = (e) => {
@@ -47,6 +49,8 @@ const Cart = () => {
 
   const saveOrderToFirestore = async (transactionRef) => {
     try {
+      // Combine country and regionCity into a single location string
+      const location = `${guestDetails.country}, ${guestDetails.regionCity}`;
       await addDoc(collection(db, "lumixing-orders"), {
         transactionRef,
         cartItems: cart.map((item) => ({
@@ -61,7 +65,7 @@ const Cart = () => {
         customer: {
           email: guestDetails.email,
           name: guestDetails.name,
-          location: guestDetails.location,
+          location: location,
           phone: guestDetails.phone,
         },
         createdAt: serverTimestamp(),
@@ -113,7 +117,7 @@ const Cart = () => {
         customer: {
           email: guestDetails.email,
           name: guestDetails.name,
-          location: guestDetails.location,
+          location: `${guestDetails.country}, ${guestDetails.regionCity}`,
           phone: guestDetails.phone,
         },
         shippingFee: shippingFeeGHS / exchangeRate, // Include shipping in metadata
@@ -122,7 +126,13 @@ const Cart = () => {
         saveOrderToFirestore(response.reference)
           .then(() => {
             clearCart();
-            setGuestDetails({ email: "", name: "", location: "", phone: "" });
+            setGuestDetails({
+              email: "",
+              name: "",
+              country: "",
+              regionCity: "",
+              phone: "",
+            });
             toast.success(
               "Order placed successfully! View your order in your account."
             );
@@ -167,7 +177,7 @@ const Cart = () => {
         customer: {
           email: guestDetails.email,
           name: guestDetails.name,
-          location: guestDetails.location,
+          location: `${guestDetails.country}, ${guestDetails.regionCity}`,
           phone: guestDetails.phone,
         },
         shippingFee: shippingFeeGHS / exchangeRate, // Include shipping in metadata
@@ -180,7 +190,13 @@ const Cart = () => {
       console.log("Coinbase API Response:", chargeData);
       if (chargeData && chargeData.hosted_url) {
         clearCart();
-        setGuestDetails({ email: "", name: "", location: "", phone: "" });
+        setGuestDetails({
+          email: "",
+          name: "",
+          country: "",
+          regionCity: "",
+          phone: "",
+        });
         toast.success("Crypto payment initiated! Redirecting to Coinbase...");
         window.location.href = chargeData.hosted_url;
       } else {
@@ -306,11 +322,25 @@ const Cart = () => {
                     </label>
                     <input
                       type="text"
-                      name="location"
-                      value={guestDetails.location}
+                      name="country"
+                      value={guestDetails.country}
                       onChange={handleInputChange}
                       className="mt-1 block w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter your location"
+                      placeholder="Enter your country"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Region/City
+                    </label>
+                    <input
+                      type="text"
+                      name="regionCity"
+                      value={guestDetails.regionCity}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter your region or city and address(eg Accra, Spintex road)"
                       required
                     />
                   </div>
