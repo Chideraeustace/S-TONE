@@ -15,53 +15,53 @@ import {
   BiChevronDown,
 } from "react-icons/bi";
 import { useCart } from "./CartContext";
-import image1 from "../assets/logo.jpg"
+import logo from "../assets/s-tonelogo.avif";
 
 const Header = () => {
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [iPhoneMenuOpen, setIPhoneMenuOpen] = useState(false);
-  const [macBookMenuOpen, setMacBookMenuOpen] = useState(false);
-  const [androidMenuOpen, setAndroidMenuOpen] = useState(false);
+  const [lashesMenuOpen, setLashesMenuOpen] = useState(false);
+  const [nailsMenuOpen, setNailsMenuOpen] = useState(false);
+  const [semiPermanentMenuOpen, setSemiPermanentMenuOpen] = useState(false);
   const { cart } = useCart();
   const cartCount = cart.length;
 
-  const iPhoneMenuRef = useRef(null);
-  const macBookMenuRef = useRef(null);
-  const androidMenuRef = useRef(null);
+  const lashesMenuRef = useRef(null);
+  const nailsMenuRef = useRef(null);
+  const semiPermanentMenuRef = useRef(null);
   const currencyMenuRef = useRef(null);
   const accountMenuRef = useRef(null);
 
   // Close mobile nav on link click
   const handleNavLinkClick = () => {
     setMobileNavOpen(false);
-    setIPhoneMenuOpen(false);
-    setMacBookMenuOpen(false);
-    setAndroidMenuOpen(false);
+    setLashesMenuOpen(false);
+    setNailsMenuOpen(false);
+    setSemiPermanentMenuOpen(false);
   };
 
   // Click outside handler to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        iPhoneMenuRef.current &&
-        !iPhoneMenuRef.current.contains(event.target)
+        lashesMenuRef.current &&
+        !lashesMenuRef.current.contains(event.target)
       ) {
-        setIPhoneMenuOpen(false);
+        setLashesMenuOpen(false);
       }
       if (
-        macBookMenuRef.current &&
-        !macBookMenuRef.current.contains(event.target)
+        nailsMenuRef.current &&
+        !nailsMenuRef.current.contains(event.target)
       ) {
-        setMacBookMenuOpen(false);
+        setNailsMenuOpen(false);
       }
       if (
-        androidMenuRef.current &&
-        !androidMenuRef.current.contains(event.target)
+        semiPermanentMenuRef.current &&
+        !semiPermanentMenuRef.current.contains(event.target)
       ) {
-        setAndroidMenuOpen(false);
+        setSemiPermanentMenuOpen(false);
       }
       if (
         currencyMenuRef.current &&
@@ -85,12 +85,12 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md transition-all duration-300">
-      <div className="py-2 bg-gradient-to-r from-gray-50 to-gray-100">
+      <div className="py-2 bg-[#4A5D23]">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
             <div className="hidden lg:flex items-center">
               <BiPhone className="mr-2 text-lg text-gray-600" />
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-white">
                 Need help? Call us:{" "}
               </span>
               <a
@@ -109,11 +109,13 @@ const Header = () => {
                 slidesPerView={1}
                 direction="vertical"
                 effect="slide"
-                className="h-8 text-sm lg:text-base text-gray-700"
+                className="h-8 text-sm lg:text-base text-gray"
               >
-                <SwiperSlide>Lumixing | Smart Devices & Gadgets!!!</SwiperSlide>
                 <SwiperSlide>
-                  📱 Pre-order iPhone 17 now, get it delivered to you!!!
+                  Free shipping to Ghana for orders over $100!!
+                </SwiperSlide>
+                <SwiperSlide>
+                  S-TONE Cosmetics | Beauty Essentials!!!
                 </SwiperSlide>
               </Swiper>
             </div>
@@ -121,7 +123,7 @@ const Header = () => {
               <div className="relative" ref={currencyMenuRef}>
                 <button
                   onClick={() => setCurrencyOpen(!currencyOpen)}
-                  className="flex items-center text-sm text-gray-700 hover:text-blue-600 transition-colors"
+                  className="flex items-center text-sm text-white hover:text-blue-600 transition-colors"
                 >
                   <BiDollar className="mr-2 text-lg" />
                   USD
@@ -132,8 +134,8 @@ const Header = () => {
                   }`}
                 >
                   <li>
-                    <button className="flex items-center px-4 py-3 hover:bg-gray-50 w-full text-left text-base text-gray-700">
-                      <BiCheck className="mr-2 text-lg text-blue-600" />
+                    <button className="flex items-center px-4 py-3 hover:bg-gray-50 w-full text-left text-base text-white">
+                      <BiCheck className="mr-2 text-lg text-white" />
                       USD
                     </button>
                   </li>
@@ -147,17 +149,17 @@ const Header = () => {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center">
             <img
-              src={image1}
-              alt="Lumixing"
+              src={logo}
+              alt="S-TONE Cosmetics"
               className="
-    h-12 w-auto           
-    rounded-lg                       
-    transition-all 
-    duration-300 
-    ease-in-out 
-    hover:scale-110       
-    hover:shadow-xl       
-  "
+                h-12 w-auto
+                rounded-lg
+                transition-all
+                duration-300
+                ease-in-out
+                hover:scale-110
+                hover:shadow-xl
+              "
             />
           </Link>
           <div
@@ -169,7 +171,7 @@ const Header = () => {
               <input
                 type="text"
                 className="flex-grow p-2 outline-none text-sm bg-transparent text-gray-700 placeholder-gray-400"
-                placeholder="Search for iPhones, MacBooks, and more"
+                placeholder="Search for lashes, nails, makeup, and more"
               />
               <button className="p-2 bg-gray-100 hover:bg-gray-200 rounded-r-lg transition-colors">
                 <BiSearch className="text-lg text-gray-600" />
@@ -197,7 +199,8 @@ const Header = () => {
               >
                 <div className="p-4 border-b">
                   <h6 className="text-lg font-semibold text-gray-800">
-                    Welcome to <span className="font-bold">Lumixing</span>
+                    Welcome to{" "}
+                    <span className="font-bold">S-TONE Cosmetics</span>
                   </h6>
                   <p className="mb-0 text-sm text-gray-600">
                     Manage your orders
@@ -274,616 +277,770 @@ const Header = () => {
                   Home
                 </NavLink>
               </li>
-              <li>
-                <NavLink
-                  to="/about"
-                  onClick={handleNavLinkClick}
-                  className={({ isActive }) =>
-                    isActive
-                      ? "text-blue-600 font-semibold text-base"
-                      : "text-gray-700 hover:text-blue-600 text-base transition-colors"
-                  }
-                >
-                  About
-                </NavLink>
-              </li>
-              <li className="relative" ref={iPhoneMenuRef}>
+              <li className="relative" ref={lashesMenuRef}>
                 <button
-                  onClick={() => setIPhoneMenuOpen(!iPhoneMenuOpen)}
+                  onClick={() => setLashesMenuOpen(!lashesMenuOpen)}
                   className="flex items-center text-gray-700 hover:text-blue-600 text-base transition-colors"
                 >
-                  iPhones <BiChevronDown className="ml-1 text-lg" />
+                  Lashes <BiChevronDown className="ml-1 text-lg" />
                 </button>
                 <div
                   className={`mobile-megamenu block xl:hidden max-h-96 overflow-y-auto bg-white shadow-lg rounded-lg mt-2 ${
-                    iPhoneMenuOpen ? "block" : "hidden"
+                    lashesMenuOpen ? "block" : "hidden"
                   }`}
                 >
                   <ul className="flex flex-col">
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/lashes/strip-lashes"
                         onClick={handleNavLinkClick}
                         className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
                       >
-                        iPhone XR
+                        Strip Lashes
                       </Link>
+                      <ul className="pl-4">
+                        <li>
+                          <Link
+                            to="/category/lashes/strip-lashes/natural"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Natural
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/lashes/strip-lashes/dramatic"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Dramatic
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/lashes/strip-lashes/volume"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Volume
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/lashes/individual-lashes"
                         onClick={handleNavLinkClick}
                         className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
                       >
-                        iPhone 11
+                        Individual Lashes
                       </Link>
+                      <ul className="pl-4">
+                        <li>
+                          <Link
+                            to="/category/lashes/individual-lashes/clusters"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Clusters
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/lashes/individual-lashes/single-flares"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Single Flares
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/lashes/individual-lashes/extensions"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Extensions
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/lashes/lash-tools"
                         onClick={handleNavLinkClick}
                         className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
                       >
-                        iPhone 12
+                        Lash Tools
                       </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        iPhone 13
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        iPhone 14
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        iPhone 15
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        iPhone 16
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        iPhone 16e
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        iPhone 17
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        iPhone 17 Air
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        iPhone 17 Pro
-                      </Link>
+                      <ul className="pl-4">
+                        <li>
+                          <Link
+                            to="/category/lashes/lash-tools/adhesives"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Adhesives
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/lashes/lash-tools/applicators"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Applicators
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/lashes/lash-tools/removers"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Removers
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                   </ul>
                 </div>
                 <div
                   className={`desktop-megamenu hidden xl:block absolute left-0 bg-white shadow-lg rounded-lg mt-2 w-[600px] p-4 z-50 transition-all duration-200 ${
-                    iPhoneMenuOpen ? "block opacity-100" : "hidden opacity-0"
+                    lashesMenuOpen ? "block opacity-100" : "hidden opacity-0"
                   }`}
                 >
                   <ul className="grid grid-cols-3 gap-4">
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/lashes/strip-lashes"
                         onClick={handleNavLinkClick}
                         className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
-                        iPhone XR
+                        Strip Lashes
                       </Link>
+                      <ul>
+                        <li>
+                          <Link
+                            to="/category/lashes/strip-lashes/natural"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Natural
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/lashes/strip-lashes/dramatic"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Dramatic
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/lashes/strip-lashes/volume"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Volume
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/lashes/individual-lashes"
                         onClick={handleNavLinkClick}
                         className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
-                        iPhone 11
+                        Individual Lashes
                       </Link>
+                      <ul>
+                        <li>
+                          <Link
+                            to="/category/lashes/individual-lashes/clusters"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Clusters
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/lashes/individual-lashes/single-flares"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Single Flares
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/lashes/individual-lashes/extensions"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Extensions
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/lashes/lash-tools"
                         onClick={handleNavLinkClick}
                         className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
-                        iPhone 12
+                        Lash Tools
                       </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        iPhone 13
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        iPhone 14
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        iPhone 15
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        iPhone 16
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        iPhone 16e
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        iPhone 17
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        iPhone 17 Air
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        iPhone 17 Pro
-                      </Link>
+                      <ul>
+                        <li>
+                          <Link
+                            to="/category/lashes/lash-tools/adhesives"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Adhesives
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/lashes/lash-tools/applicators"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Applicators
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/lashes/lash-tools/removers"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Removers
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                   </ul>
                 </div>
               </li>
-              <li className="relative" ref={macBookMenuRef}>
+              <li className="relative" ref={nailsMenuRef}>
                 <button
-                  onClick={() => setMacBookMenuOpen(!macBookMenuOpen)}
+                  onClick={() => setNailsMenuOpen(!nailsMenuOpen)}
                   className="flex items-center text-gray-700 hover:text-blue-600 text-base transition-colors"
                 >
-                  MacBooks <BiChevronDown className="ml-1 text-lg" />
+                  Nails <BiChevronDown className="ml-1 text-lg" />
                 </button>
                 <div
                   className={`mobile-megamenu block xl:hidden max-h-96 overflow-y-auto bg-white shadow-lg rounded-lg mt-2 ${
-                    macBookMenuOpen ? "block" : "hidden"
+                    nailsMenuOpen ? "block" : "hidden"
                   }`}
                 >
                   <ul className="flex flex-col">
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/nails/polish"
                         onClick={handleNavLinkClick}
                         className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
                       >
-                        MacBook Air M4
+                        Nail Polish
                       </Link>
+                      <ul className="pl-4">
+                        <li>
+                          <Link
+                            to="/category/nails/polish/gel"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Gel Polish
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/nails/polish/regular"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Regular Polish
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/nails/polish/glitter"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Glitter Polish
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/nails/press-ons"
                         onClick={handleNavLinkClick}
                         className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
                       >
-                        MacBook Pro M4
+                        Press-On Nails
                       </Link>
+                      <ul className="pl-4">
+                        <li>
+                          <Link
+                            to="/category/nails/press-ons/short"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Short
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/nails/press-ons/medium"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Medium
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/nails/press-ons/long"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Long
+                          </Link>
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      <Link
+                        to="/category/nails/nail-tools"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Nail Tools
+                      </Link>
+                      <ul className="pl-4">
+                        <li>
+                          <Link
+                            to="/category/nails/nail-tools/files"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Files
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/nails/nail-tools/clippers"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Clippers
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/nails/nail-tools/brushes"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Brushes
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                   </ul>
                 </div>
                 <div
                   className={`desktop-megamenu hidden xl:block absolute left-0 bg-white shadow-lg rounded-lg mt-2 w-[600px] p-4 z-50 transition-all duration-200 ${
-                    macBookMenuOpen ? "block opacity-100" : "hidden opacity-0"
-                  }`}
-                >
-                  <ul className="grid grid-cols-2 gap-4">
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        MacBook Air M4
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        MacBook Pro M4
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              </li>
-              <li className="relative" ref={androidMenuRef}>
-                <button
-                  onClick={() => setAndroidMenuOpen(!androidMenuOpen)}
-                  className="flex items-center text-gray-700 hover:text-blue-600 text-base transition-colors"
-                >
-                  Samsungs <BiChevronDown className="ml-1 text-lg" />
-                </button>
-                <div
-                  className={`mobile-megamenu block xl:hidden max-h-96 overflow-y-auto bg-white shadow-lg rounded-lg mt-2 ${
-                    androidMenuOpen ? "block" : "hidden"
-                  }`}
-                >
-                  <ul className="flex flex-col">
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Galaxy S
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Galaxy S II
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Galaxy S III
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Galaxy S4
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Galaxy S5
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Galaxy S6 / S6 Edge
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Galaxy S7 / S7 Edge
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Galaxy S8 / S8+
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Galaxy S9 / S9+
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Galaxy S10e / S10 / S10+ / S10 5G
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S20 / S20+ / S20 Ultra
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S21 / S21+ / S21 Ultra
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S22 / S22+ / S22 Ultra
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S23 / S23+ / S23 Ultra
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S24 / S24+ / S24 Ultra
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S25 / S25+ / S25 Ultra / S25 Edge
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-                <div
-                  className={`desktop-megamenu hidden xl:block absolute left-0 bg-white shadow-lg rounded-lg mt-2 w-[600px] p-4 z-50 transition-all duration-200 ${
-                    androidMenuOpen ? "block opacity-100" : "hidden opacity-0"
+                    nailsMenuOpen ? "block opacity-100" : "hidden opacity-0"
                   }`}
                 >
                   <ul className="grid grid-cols-3 gap-4">
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/nails/polish"
                         onClick={handleNavLinkClick}
                         className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
-                        Galaxy S
+                        Nail Polish
                       </Link>
+                      <ul>
+                        <li>
+                          <Link
+                            to="/category/nails/polish/gel"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Gel Polish
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/nails/polish/regular"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Regular Polish
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/nails/polish/glitter"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Glitter Polish
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/nails/press-ons"
                         onClick={handleNavLinkClick}
                         className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
-                        Galaxy S II
+                        Press-On Nails
                       </Link>
+                      <ul>
+                        <li>
+                          <Link
+                            to="/category/nails/press-ons/short"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Short
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/nails/press-ons/medium"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Medium
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/nails/press-ons/long"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Long
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/nails/nail-tools"
                         onClick={handleNavLinkClick}
                         className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
-                        Galaxy S III
+                        Nail Tools
                       </Link>
+                      <ul>
+                        <li>
+                          <Link
+                            to="/category/nails/nail-tools/files"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Files
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/nails/nail-tools/clippers"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Clippers
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/nails/nail-tools/brushes"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Brushes
+                          </Link>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li className="relative" ref={semiPermanentMenuRef}>
+                <button
+                  onClick={() =>
+                    setSemiPermanentMenuOpen(!semiPermanentMenuOpen)
+                  }
+                  className="flex items-center text-gray-700 hover:text-blue-600 text-base transition-colors"
+                >
+                  Semi-Permanent Makeup{" "}
+                  <BiChevronDown className="ml-1 text-lg" />
+                </button>
+                <div
+                  className={`mobile-megamenu block xl:hidden max-h-96 overflow-y-auto bg-white shadow-lg rounded-lg mt-2 ${
+                    semiPermanentMenuOpen ? "block" : "hidden"
+                  }`}
+                >
+                  <ul className="flex flex-col">
+                    <li>
+                      <Link
+                        to="/category/semi-permanent/eyebrows"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Eyebrows
+                      </Link>
+                      <ul className="pl-4">
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/eyebrows/microblading"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Microblading
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/eyebrows/powder-brows"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Powder Brows
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/eyebrows/ombre-brows"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Ombre Brows
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/semi-permanent/eyeliners"
                         onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
                       >
-                        Galaxy S4
+                        Eyeliners
                       </Link>
+                      <ul className="pl-4">
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/eyeliners/upper-liner"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Upper Liner
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/eyeliners/lower-liner"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Lower Liner
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/eyeliners/winged-liner"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Winged Liner
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/semi-permanent/lips"
+                        onClick={handleNavLinkClick}
+                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
+                      >
+                        Lips
+                      </Link>
+                      <ul className="pl-4">
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/lips/lip-blush"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Lip Blush
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/lips/full-lip"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Full Lip
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/lips/lip-liner"
+                            onClick={handleNavLinkClick}
+                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Lip Liner
+                          </Link>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+                <div
+                  className={`desktop-megamenu hidden xl:block absolute left-0 bg-white shadow-lg rounded-lg mt-2 w-[600px] p-4 z-50 transition-all duration-200 ${
+                    semiPermanentMenuOpen
+                      ? "block opacity-100"
+                      : "hidden opacity-0"
+                  }`}
+                >
+                  <ul className="grid grid-cols-3 gap-4">
+                    <li>
+                      <Link
+                        to="/category/semi-permanent/eyebrows"
                         onClick={handleNavLinkClick}
                         className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
-                        Galaxy S5
+                        Eyebrows
                       </Link>
+                      <ul>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/eyebrows/microblading"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Microblading
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/eyebrows/powder-brows"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Powder Brows
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/eyebrows/ombre-brows"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Ombre Brows
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/semi-permanent/eyeliners"
                         onClick={handleNavLinkClick}
                         className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
-                        Galaxy S6 / S6 Edge
+                        Eyeliners
                       </Link>
+                      <ul>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/eyeliners/upper-liner"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Upper Liner
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/eyeliners/lower-liner"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Lower Liner
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/eyeliners/winged-liner"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Winged Liner
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                     <li>
                       <Link
-                        to="/category"
+                        to="/category/semi-permanent/lips"
                         onClick={handleNavLinkClick}
                         className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                       >
-                        Galaxy S7 / S7 Edge
+                        Lips
                       </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S8 / S8+
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S9 / S9+
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S10e / S10 / S10+ / S10 5G
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S20 / S20+ / S20 Ultra
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S21 / S21+ / S21 Ultra
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S22 / S22+ / S22 Ultra
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S23 / S23+ / S23 Ultra
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S24 / S24+ / S24 Ultra
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Galaxy S25 / S25+ / S25 Ultra / S25 Edge
-                      </Link>
+                      <ul>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/lips/lip-blush"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Lip Blush
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/lips/full-lip"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Full Lip
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/category/semi-permanent/lips/lip-liner"
+                            onClick={handleNavLinkClick}
+                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                          >
+                            Lip Liner
+                          </Link>
+                        </li>
+                      </ul>
                     </li>
                   </ul>
                 </div>
               </li>
               <li>
                 <NavLink
-                  to="/category"
+                  to="/kits"
                   onClick={handleNavLinkClick}
                   className={({ isActive }) =>
                     isActive
@@ -891,12 +1048,12 @@ const Header = () => {
                       : "text-gray-700 hover:text-blue-600 text-base transition-colors"
                   }
                 >
-                  Store
+                  Kits
                 </NavLink>
               </li>
               <li>
                 <NavLink
-                  to="/contact"
+                  to="/glam-guide"
                   onClick={handleNavLinkClick}
                   className={({ isActive }) =>
                     isActive
@@ -904,7 +1061,20 @@ const Header = () => {
                       : "text-gray-700 hover:text-blue-600 text-base transition-colors"
                   }
                 >
-                  Contact
+                  Glam Guide
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/learning-portal"
+                  onClick={handleNavLinkClick}
+                  className={({ isActive }) =>
+                    isActive
+                      ? "text-blue-600 font-semibold text-base"
+                      : "text-gray-700 hover:text-blue-600 text-base transition-colors"
+                  }
+                >
+                  Learning Portal
                 </NavLink>
               </li>
             </ul>

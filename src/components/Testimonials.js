@@ -1,85 +1,44 @@
 import React, { useState, useEffect } from "react";
 
 const Testimonials = () => {
-  // Static data for 10 customer reviews with star ratings (can be replaced with API data)
   const testimonials = [
     {
       id: 1,
-      name: "Emily Carter",
+      name: "Ama Kwarteng",
       quote:
-        "Absolutely love the quality of the products! Fast shipping and great customer service.",
+        "The lashes from S-TONE are stunning! So easy to apply, and the free shipping to Ghana with brow mapping tools was a bonus!",
       role: "Verified Buyer",
       rating: 5,
     },
     {
       id: 2,
-      name: "Michael Lee",
+      name: "Nana Yaa",
       quote:
-        "Best online shopping experience. The deals are unbeatable, and everything arrived on time.",
+        "I love the vibrant nail polishes and press-ons. Fast delivery to Ghana and amazing quality. Highly recommend!",
       role: "Verified Buyer",
       rating: 4,
     },
     {
       id: 3,
-      name: "Sophia Nguyen",
+      name: "Efua Mensah",
       quote:
-        "High-quality items at affordable prices. Will definitely shop here again!",
+        "The semi-permanent makeup transformed my brows! Free shipping on my order over $100 made it even better.",
       role: "Verified Buyer",
       rating: 5,
     },
     {
       id: 4,
-      name: "James Patel",
+      name: "Akosua Boateng",
       quote:
-        "The website is user-friendly, and the product descriptions are accurate. Highly recommend.",
+        "S-TONE’s products are top-notch, and the customer service is fantastic. The brow mapping tools were a game-changer!",
       role: "Verified Buyer",
-      rating: 4,
+      rating: 5,
     },
     {
       id: 5,
-      name: "Olivia Ramirez",
+      name: "Adwoa Sarpong",
       quote:
-        "Excellent variety of products. Customer support was quick to resolve my query.",
-      role: "Verified Buyer",
-      rating: 5,
-    },
-    {
-      id: 6,
-      name: "Daniel Kim",
-      quote:
-        "Super fast delivery and well-packaged items. Five stars all the way!",
-      role: "Verified Buyer",
-      rating: 5,
-    },
-    {
-      id: 7,
-      name: "Isabella Rossi",
-      quote:
-        "Found exactly what I was looking for. The return process was hassle-free.",
-      role: "Verified Buyer",
-      rating: 4,
-    },
-    {
-      id: 8,
-      name: "Ethan Wong",
-      quote:
-        "Great discounts and reliable service. My go-to e-commerce site now.",
-      role: "Verified Buyer",
-      rating: 5,
-    },
-    {
-      id: 9,
-      name: "Ava Thompson",
-      quote:
-        "Products exceeded my expectations. Easy navigation and secure checkout.",
-      role: "Verified Buyer",
-      rating: 5,
-    },
-    {
-      id: 10,
-      name: "Noah Garcia",
-      quote:
-        "Fantastic selection and competitive prices. Highly satisfied with my purchase.",
+        "Great variety of cosmetics and super easy checkout. My order arrived quickly with free shipping to Ghana!",
       role: "Verified Buyer",
       rating: 4,
     },
@@ -115,7 +74,7 @@ const Testimonials = () => {
     return Array.from({ length: 5 }, (_, index) => (
       <span
         key={index}
-        className={index < rating ? "text-yellow-400" : "text-gray-300"}
+        className={index < rating ? "text-[#4A5D23]" : "text-gray-300"}
       >
         ★
       </span>
@@ -123,8 +82,8 @@ const Testimonials = () => {
   };
 
   return (
-    <section className="py-10 px-5 bg-gray-100 text-center">
-      <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-8">
+    <section className="py-10 px-5 bg-whitesmoke text-center">
+      <h2 className="text-3xl md:text-4xl font-bold text-[#4A5D23] mb-8">
         Customer Reviews
       </h2>
       <div className="relative max-w-4xl mx-auto">
@@ -143,7 +102,7 @@ const Testimonials = () => {
                   <p className="italic text-gray-600 mb-4 text-base">
                     "{testimonial.quote}"
                   </p>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  <h3 className="text-lg font-semibold text-[#4A5D23] mb-1">
                     {testimonial.name}
                   </h3>
                   <p className="text-sm text-gray-500">{testimonial.role}</p>
@@ -156,13 +115,13 @@ const Testimonials = () => {
         {/* Navigation Arrows */}
         <button
           onClick={prevSlide}
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full hover:bg-gray-600"
+          className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-[#4A5D23] text-whitesmoke p-2 rounded-full hover:bg-[#3A4A1C]"
         >
           &lt;
         </button>
         <button
           onClick={nextSlide}
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full hover:bg-gray-600"
+          className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-[#4A5D23] text-whitesmoke p-2 rounded-full hover:bg-[#3A4A1C]"
         >
           &gt;
         </button>
@@ -174,7 +133,7 @@ const Testimonials = () => {
               key={index}
               onClick={() => goToSlide(index)}
               className={`w-3 h-3 rounded-full ${
-                index === currentIndex ? "bg-gray-800" : "bg-gray-300"
+                index === currentIndex ? "bg-[#4A5D23]" : "bg-gray-300"
               }`}
             />
           ))}

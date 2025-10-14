@@ -1,38 +1,38 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { db } from "../Firebase";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import lashesImage from "../assets/eyelash.webp";
+import nailsImage from "../assets/nails.webp";
+import semiPermanentImage from "../assets/makeup.webp";
 
 const BestSellers = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  useEffect(() => {
-    const fetchRecentProducts = async () => {
-      try {
-        const q = query(
-          collection(db, "lumixing-product"),
-          orderBy("createdAt", "desc"),
-          limit(5)
-        );
-        const querySnapshot = await getDocs(q);
-        const productList = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setProducts(productList);
-        setLoading(false);
-      } catch (err) {
-        setError("Failed to fetch recent products");
-        console.error(err);
-        setLoading(false);
-      }
-    };
-
-    fetchRecentProducts();
-  }, []);
+  const products = [
+    {
+      id: "lashes",
+      title: "Premium Lashes Collection",
+      description:
+        "Enhance your eyes with our luxurious strip and individual lashes. Free shipping to Ghana on orders over $100 plus free brow mapping tools!",
+      imageUrl: lashesImage,
+      link: "/category/lashes",
+    },
+    {
+      id: "nails",
+      title: "Nails & Press-Ons",
+      description:
+        "Transform your nails with our vibrant polishes and stylish press-ons. Free shipping to Ghana on orders over $100 plus free brow mapping tools!",
+      imageUrl: nailsImage,
+      link: "/category/nails",
+    },
+    {
+      id: "semi-permanent",
+      title: "Semi-Permanent Makeup",
+      description:
+        "Achieve flawless brows, eyeliner, and lips with our semi-permanent makeup solutions. Free shipping to Ghana on orders over $100 plus free brow mapping tools!",
+      imageUrl: semiPermanentImage,
+      link: "/category/semi-permanent",
+    },
+  ];
 
   // Auto-slide effect (5 seconds)
   useEffect(() => {
@@ -52,51 +52,19 @@ const BestSellers = () => {
     setCurrentSlide((prev) => (prev - 1 + products.length) % products.length);
   };
 
-  if (loading) {
-    return (
-      <div className="py-12 bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="py-12 bg-gray-50 flex items-center justify-center">
-        <div className="p-4 bg-red-100 text-red-800 rounded-lg flex items-center">
-          <svg
-            className="w-6 h-6 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-          {error}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <section className="py-12 sm:py-16 bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6">
+    <section className="py-12 sm:py-16 bg-whitesmoke">
+      <div className="w-full px-0">
         <h2
-          className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 sm:mb-12 text-center"
+          className="text-3xl sm:text-4xl font-bold text-[#4A5D23] mb-8 sm:mb-12 text-center"
           data-aos="fade-up"
         >
           Best Sellers
         </h2>
         {products.length > 0 ? (
-          <div className="relative">
+          <div className="relative w-full">
             {/* Slider Container */}
-            <div className="overflow-hidden">
+            <div className="overflow-hidden w-full">
               <div
                 className="flex transition-transform duration-500 ease-in-out"
                 style={{ transform: `translateX(-${currentSlide * 100}%)` }}
@@ -104,17 +72,31 @@ const BestSellers = () => {
                 {products.map((product, index) => (
                   <div
                     key={product.id}
-                    className="min-w-full flex items-center justify-center bg-white rounded-xl overflow-hidden"
+                    className="min-w-full flex flex-col items-center justify-center bg-white overflow-hidden"
                     data-aos="fade-up"
                     data-aos-delay={index * 100}
                   >
-                    <Link to={`/product-details/${product.id}`}>
+                    <Link to={product.link} className="w-full">
                       <img
                         src={product.imageUrl}
                         alt={product.title}
-                        className="w-full h-48 object-contain"
+                        className="w-full max-h-100 sm:max-h-74 md:max-h-70 lg:max-h-96 object-contain"
                       />
                     </Link>
+                    <div className="p-4 text-center max-w-2xl mx-auto">
+                      <h3 className="text-xl font-semibold text-[#4A5D23] mb-2">
+                        {product.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm sm:text-base mb-4">
+                        {product.description}
+                      </p>
+                      <Link
+                        to={product.link}
+                        className="inline-block bg-[#4A5D23] text-white px-4 py-2 rounded-lg font-semibold text-sm sm:text-base hover:bg-[#3A4A1C] transition-colors duration-200"
+                      >
+                        Shop Now
+                      </Link>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -124,7 +106,7 @@ const BestSellers = () => {
               <>
                 <button
                   onClick={prevSlide}
-                  className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors duration-200"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-[#4A5D23] text-white p-2 rounded-full hover:bg-[#3A4A1C] transition-colors duration-200"
                   aria-label="Previous slide"
                 >
                   <svg
@@ -144,7 +126,7 @@ const BestSellers = () => {
                 </button>
                 <button
                   onClick={nextSlide}
-                  className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors duration-200"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-[#4A5D23] text-white p-2 rounded-full hover:bg-[#3A4A1C] transition-colors duration-200"
                   aria-label="Next slide"
                 >
                   <svg
@@ -166,9 +148,7 @@ const BestSellers = () => {
             )}
           </div>
         ) : (
-          <p className="text-gray-600 text-center">
-            No recent products available.
-          </p>
+          <p className="text-gray-600 text-center">No products available.</p>
         )}
       </div>
     </section>

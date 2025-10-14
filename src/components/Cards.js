@@ -1,170 +1,150 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { db } from "../Firebase";
-import {
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  limit,
-  where,
-} from "firebase/firestore";
+import classicLashesImage from "../assets/classic.webp";
+import hybridLashesImage from "../assets/hybrid.webp";
+import volumeLashesImage from "../assets/volume.webp";
+import megaVolumeLashesImage from "../assets/megavolume.webp";
+import softGelImage from "../assets/softgel.webp";
+import acrylicPowderImage from "../assets/acrylic.webp";
+import builderJarImage from "../assets/builder.webp";
+import lipBlushImage from "../assets/lipblush.webp";
+import microbladingImage from "../assets/microblading.webp";
+import powderBrowsImage from "../assets/powderbrows.webp";
 
-const Cards = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchProductsByCategory = async () => {
-      try {
-        // Fetch all categories
-        const categorySnapshot = await getDocs(
-          collection(db, "lumixing-categories")
-        );
-        const categories = categorySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        // Fetch one product per category
-        const productList = [];
-        for (const category of categories) {
-          const q = query(
-            collection(db, "lumixing-product"),
-            where("categoryId", "==", category.id),
-            orderBy("createdAt", "desc"),
-            limit(1)
-          );
-          const querySnapshot = await getDocs(q);
-          if (!querySnapshot.empty) {
-            const product = querySnapshot.docs[0];
-            productList.push({
-              id: product.id,
-              ...product.data(),
-            });
-          }
-        }
-
-        setProducts(productList);
-        setLoading(false);
-      } catch (err) {
-        if (
-          err.code === "failed-precondition" &&
-          err.message.includes("index")
-        ) {
-          setError(
-            "Firestore query requires an index. Please create it in the Firebase Console."
-          );
-        } else {
-          setError("Failed to fetch products from categories");
-        }
-        console.error(err);
-        setLoading(false);
-      }
-    };
-
-    fetchProductsByCategory();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="py-12 bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="py-12 bg-white flex items-center justify-center">
-        <div className="p-4 bg-red-100 text-red-800 rounded-lg flex items-center">
-          <svg
-            className="w-6 h-6 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-          {error}
-        </div>
-      </div>
-    );
-  }
+const Categories = () => {
+  const categoryGroups = [
+    {
+      title: "Lash Styling System",
+      subcategories: [
+        {
+          id: "classic-lashes",
+          title: "Classic Lashes",
+          image: classicLashesImage,
+          link: "/category/lashes/classic",
+        },
+        {
+          id: "hybrid-lashes",
+          title: "Hybrid Lashes",
+          image: hybridLashesImage,
+          link: "/category/lashes/hybrid",
+        },
+        {
+          id: "volume-lashes",
+          title: "Volume Lashes",
+          image: volumeLashesImage,
+          link: "/category/lashes/volume",
+        },
+        {
+          id: "mega-volume-lashes",
+          title: "Mega Volume Lashes",
+          image: megaVolumeLashesImage,
+          link: "/category/lashes/mega-volume",
+        },
+      ],
+    },
+    {
+      title: "Advanced Nail Enhancement",
+      subcategories: [
+        {
+          id: "soft-gel",
+          title: "Soft Gel",
+          image: softGelImage,
+          link: "/category/nails/soft-gel",
+        },
+        {
+          id: "acrylic-powder",
+          title: "Acrylic Powder",
+          image: acrylicPowderImage,
+          link: "/category/nails/acrylic-powder",
+        },
+        {
+          id: "builder-jar",
+          title: "Builder in a Jar",
+          image: builderJarImage,
+          link: "/category/nails/builder-jar",
+        },
+      ],
+    },
+    {
+      title: "Semi-Permanent Beauty Techniques",
+      subcategories: [
+        {
+          id: "lip-blush",
+          title: "Lip Blush",
+          image: lipBlushImage,
+          link: "/category/semi-permanent/lip-blush",
+        },
+        {
+          id: "microblading",
+          title: "Microblading",
+          image: microbladingImage,
+          link: "/category/semi-permanent/microblading",
+        },
+        {
+          id: "powder-brows",
+          title: "Powder Brows",
+          image: powderBrowsImage,
+          link: "/category/semi-permanent/powder-brows",
+        },
+      ],
+    },
+  ];
 
   return (
-    <section className="py-12 sm:py-16 bg-white">
+    <section className="py-12 sm:py-16 bg-whitesmoke">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-12">
-          <h2
-            className="text-3xl sm:text-4xl font-bold text-gray-900 text-center sm:text-left"
-            data-aos="fade-up"
-          >
-            Explore More
-          </h2>
-          <Link
-            to="/category"
-            className="mt-4 sm:mt-0 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium text-sm sm:text-base hover:bg-blue-700 transition-colors duration-200"
-          >
-            View All
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.length > 0 ? (
-            products.map((product, index) => (
-              <div
-                key={product.id}
-                className="bg-white rounded-xl overflow-hidden transform transition-all duration-300 hover:-translate-y-1"
-                data-aos="fade-up"
-                data-aos-delay={index * 100}
-              >
-                <div className="flex items-center justify-center bg-white">
-                  <img
-                    src={product.imageUrl}
-                    alt={product.title}
-                    className="w-full h-48 object-contain"
-                  />
-                </div>
-                <div className="p-4 sm:p-6">
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 truncate">
-                    {product.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm sm:text-base mb-4 line-clamp-2">
-                    {product.description}
-                  </p>
-                  <p className="text-gray-600 text-sm sm:text-base mb-4">
-                    ${product.price ? product.price.toFixed(2) : "N/A"}
-                  </p>
-                  {/* If Firestore prices are in GHS, convert to USD here:
-                  <p className="text-gray-600 text-sm sm:text-base mb-4">
-                    ${(product.price ? (product.price * 0.064).toFixed(2) : "N/A")}
-                  </p>
-                  */}
+        <h2
+          className="text-3xl sm:text-4xl font-bold text-[#4A5D23] mb-4 text-center"
+          data-aos="fade-up"
+        >
+          Explore Our Collections
+        </h2>
+        <p
+          className="text-gray-600 text-base sm:text-lg mb-12 text-center max-w-3xl mx-auto"
+          data-aos="fade-up"
+          data-aos-delay="100"
+        >
+          Discover premium lashes, nails, and semi-permanent makeup. Enjoy free
+          shipping to Ghana on orders over $100 plus free brow mapping tools!
+        </p>
+        {categoryGroups.map((group, groupIndex) => (
+          <div key={group.title} className="mb-12">
+            <h3
+              className="text-2xl sm:text-3xl font-semibold text-[#4A5D23] mb-6 text-center"
+              data-aos="fade-up"
+              data-aos-delay={groupIndex * 100}
+            >
+              {group.title}
+            </h3>
+            <div className="flex flex-row overflow-x-auto gap-6 sm:gap-8 max-w-6xl mx-auto scrollbar-hide">
+              {group.subcategories.map((category, index) => (
+                <div
+                  key={category.id}
+                  className="flex flex-col items-center text-center flex-shrink-0"
+                  data-aos="fade-up"
+                  data-aos-delay={groupIndex * 100 + index * 100}
+                >
                   <Link
-                    to={`/product-details/${product.id}`}
-                    className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base hover:bg-blue-700 transition-colors duration-200"
+                    to={category.link}
+                    className="group relative w-48 h-48 sm:w-56 sm:h-56 rounded-full overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
                   >
-                    View Details
+                    <img
+                      src={category.image}
+                      alt={category.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-[#4A5D23]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </Link>
+                  <h4 className="text-lg sm:text-xl font-semibold text-[#4A5D23] mt-4 mb-2">
+                    {category.title}
+                  </h4>
                 </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-600 text-center col-span-full">
-              No products available in any category.
-            </p>
-          )}
-        </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );
 };
 
-export default Cards;
+export default Categories;

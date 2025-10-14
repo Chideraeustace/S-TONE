@@ -7,8 +7,8 @@ import Header from "./components/Header";
 import Hero from "./components/Hero";
 import PromoCards from "./components/PromoCards";
 import BestSellers from "./components/BestSellers";
-import Cards from "./components/Cards";
-import CallToAction from "./components/CallToAction";
+import Categories from "./components/Cards"
+import GlamGuide from "./components/CallToAction";
 import Footer from "./components/Footer";
 import About from "./components/About";
 import Category from "./components/Categories";
@@ -38,11 +38,11 @@ function App({ categories }) {
                 <ProtectedRoute>
                   <>
                     <Hero />
-                    <PromoCards />
                     <BestSellers />
-                    <Cards />
-                    <CallToAction />
-                    <Testimonials/>
+                    <PromoCards />
+                    <Categories/>
+                    <GlamGuide/>
+                    <Testimonials />
                   </>
                 </ProtectedRoute>
               }
@@ -102,7 +102,7 @@ function App({ categories }) {
               path="/account"
               element={
                 <ProtectedRoute>
-                  <Account/>
+                  <Account />
                 </ProtectedRoute>
               }
             />
