@@ -14,12 +14,18 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import { Link } from "react-router-dom";
+import { AlertMessages } from "../DashboardComponents/AlertMessage"; // Fixed import path (AlertMessages, not AlertMessage)
+import { ProductForm } from "../DashboardComponents/ProductForm";
+import { ProductList } from "../DashboardComponents/ProductList";
+import { CategoryForm } from "../DashboardComponents/CategoryForm";
+import { CategoryList } from "../DashboardComponents/CategoryList";
+import { OrderList } from "../DashboardComponents/OrderList";
 
 const Dashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -29,13 +35,17 @@ const Dashboard = () => {
     imageFile: null,
     imagePreview: "",
     categoryId: "",
+    subcategoryId: "",
     price: "",
     quantity: "",
     colors: "",
-    storage: "",
   });
   const [editingProduct, setEditingProduct] = useState(null);
-  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategory, setNewCategory] = useState({
+    name: "",
+    isSubcategory: false,
+    parentCategoryId: "",
+  });
   const [editingCategory, setEditingCategory] = useState(null);
   const [activeTab, setActiveTab] = useState("products");
 
@@ -54,16 +64,17 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const categorySnapshot = await getDocs(
-          collection(db, "lumixing-categories")
+          collection(db, "s-tone-categories")
         );
         const categoryList = categorySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        setCategories(categoryList);
+        setCategories(categoryList.filter((c) => !c.isSubcategory));
+        setSubcategories(categoryList.filter((c) => c.isSubcategory));
 
         const productSnapshot = await getDocs(
-          collection(db, "lumixing-product")
+          collection(db, "s-tone-products")
         );
         const productList = productSnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -71,7 +82,7 @@ const Dashboard = () => {
         }));
         setProducts(productList);
 
-        const orderSnapshot = await getDocs(collection(db, "lumixing-orders"));
+        const orderSnapshot = await getDocs(collection(db, "s-tone-orders"));
         const orderList = orderSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -159,15 +170,26 @@ const Dashboard = () => {
   };
 
   const handleCategoryInputChange = (e) => {
-    const { value } = e.target;
+    const { name, value, type, checked } = e.target;
+    const formattedValue = type === "checkbox" ? checked : value;
     if (editingCategory) {
       setEditingCategory({
         ...editingCategory,
-        name: value,
-        url: `/${value.toLowerCase().replace(/\s+/g, "-")}`,
+        [name]: formattedValue,
+        url:
+          name === "name"
+            ? `/${value.toLowerCase().replace(/\s+/g, "-")}`
+            : editingCategory.url,
       });
     } else {
-      setNewCategoryName(value);
+      setNewCategory({
+        ...newCategory,
+        [name]: formattedValue,
+        url:
+          name === "name"
+            ? `/${value.toLowerCase().replace(/\s+/g, "-")}`
+            : newCategory.url,
+      });
     }
   };
 
@@ -181,6 +203,7 @@ const Dashboard = () => {
       !product.title ||
       !product.description ||
       !product.categoryId ||
+      !product.subcategoryId ||
       !product.price ||
       !product.quantity
     ) {
@@ -193,11 +216,6 @@ const Dashboard = () => {
       (!product.imageFile || !(product.imageFile instanceof File))
     ) {
       setError("Please select a valid image file.");
-      setTimeout(() => setError(null), 3000);
-      return;
-    }
-    if (isSmartphoneCategory(product.categoryId) && !product.storage) {
-      setError("Please provide storage for iPhone or Android category.");
       setTimeout(() => setError(null), 3000);
       return;
     }
@@ -220,6 +238,7 @@ const Dashboard = () => {
         title: product.title,
         description: product.description,
         categoryId: product.categoryId,
+        subcategoryId: product.subcategoryId,
         price,
         quantity,
         colors: product.colors
@@ -228,7 +247,6 @@ const Dashboard = () => {
               .map((c) => c.trim())
               .filter((c) => c)
           : [],
-        storage: product.storage || "",
         createdAt: new Date(),
       };
 
@@ -274,7 +292,7 @@ const Dashboard = () => {
       productData.imageUrl = imageUrl;
 
       if (editingProduct) {
-        const productRef = doc(db, "lumixing-product", editingProduct.id);
+        const productRef = doc(db, "s-tone-products", editingProduct.id);
         await updateDoc(productRef, productData);
         setProducts(
           products.map((p) =>
@@ -285,7 +303,7 @@ const Dashboard = () => {
         setSuccess("Product updated successfully!");
       } else {
         const docRef = await addDoc(
-          collection(db, "lumixing-product"),
+          collection(db, "s-tone-products"),
           productData
         );
         setProducts([...products, { id: docRef.id, ...productData }]);
@@ -301,10 +319,10 @@ const Dashboard = () => {
         imageFile: null,
         imagePreview: "",
         categoryId: "",
+        subcategoryId: "",
         price: "",
         quantity: "",
         colors: "",
-        storage: "",
       });
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -332,7 +350,7 @@ const Dashboard = () => {
             console.warn("Failed to delete image:", err);
           }
         }
-        await deleteDoc(doc(db, "lumixing-product", id));
+        await deleteDoc(doc(db, "s-tone-products", id));
         setProducts(products.filter((p) => p.id !== id));
         setSuccess("Product deleted successfully!");
         setTimeout(() => setSuccess(null), 3000);
@@ -350,7 +368,6 @@ const Dashboard = () => {
       price: product.price || "",
       quantity: product.quantity || "",
       colors: product.colors ? product.colors.join(", ") : "",
-      storage: product.storage || "",
       imageFile: null,
       imagePreview: product.imageUrl || "",
     });
@@ -361,14 +378,16 @@ const Dashboard = () => {
     setError(null);
     setSuccess(null);
     try {
-      const categoryUrl = `/${newCategoryName
+      const categoryUrl = `/${newCategory.name
         .toLowerCase()
         .replace(/\s+/g, "-")}`;
-      const existingCategory = categories.find(
-        (c) =>
-          c.url === (editingCategory ? editingCategory.url : categoryUrl) &&
-          c.id !== (editingCategory ? editingCategory.id : null)
-      );
+      const existingCategory = categories
+        .concat(subcategories)
+        .find(
+          (c) =>
+            c.url === (editingCategory ? editingCategory.url : categoryUrl) &&
+            c.id !== (editingCategory ? editingCategory.id : null)
+        );
       if (existingCategory) {
         setError("Category URL must be unique.");
         setTimeout(() => setError(null), 3000);
@@ -376,30 +395,54 @@ const Dashboard = () => {
       }
 
       if (editingCategory) {
-        const categoryRef = doc(db, "lumixing-categories", editingCategory.id);
+        const categoryRef = doc(db, "s-tone-categories", editingCategory.id);
         await updateDoc(categoryRef, {
           name: editingCategory.name,
           url: editingCategory.url,
+          isSubcategory: editingCategory.isSubcategory,
+          parentCategoryId: editingCategory.parentCategoryId,
         });
-        setCategories(
-          categories.map((c) =>
-            c.id === editingCategory.id ? editingCategory : c
-          )
-        );
+        if (editingCategory.isSubcategory) {
+          setSubcategories(
+            subcategories.map((c) =>
+              c.id === editingCategory.id ? editingCategory : c
+            )
+          );
+        } else {
+          setCategories(
+            categories.map((c) =>
+              c.id === editingCategory.id ? editingCategory : c
+            )
+          );
+        }
         setEditingCategory(null);
         setSuccess("Category updated successfully!");
       } else {
-        const docRef = await addDoc(collection(db, "lumixing-categories"), {
-          name: newCategoryName,
+        const docRef = await addDoc(collection(db, "s-tone-categories"), {
+          name: newCategory.name,
           url: categoryUrl,
+          isSubcategory: newCategory.isSubcategory,
+          parentCategoryId: newCategory.isSubcategory
+            ? newCategory.parentCategoryId
+            : "",
         });
-        setCategories([
-          ...categories,
-          { id: docRef.id, name: newCategoryName, url: categoryUrl },
-        ]);
+        const newCategoryData = {
+          id: docRef.id,
+          name: newCategory.name,
+          url: categoryUrl,
+          isSubcategory: newCategory.isSubcategory,
+          parentCategoryId: newCategory.isSubcategory
+            ? newCategory.parentCategoryId
+            : "",
+        };
+        if (newCategory.isSubcategory) {
+          setSubcategories([...subcategories, newCategoryData]);
+        } else {
+          setCategories([...categories, newCategoryData]);
+        }
         setSuccess("Category added successfully!");
       }
-      setNewCategoryName("");
+      setNewCategory({ name: "", isSubcategory: false, parentCategoryId: "" });
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError("Failed to save category: " + err.message);
@@ -411,8 +454,9 @@ const Dashboard = () => {
   const handleCategoryDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this category?")) {
       try {
+        const isSubcategory = subcategories.find((c) => c.id === id);
         const productsUsingCategory = products.filter(
-          (p) => p.categoryId === id
+          (p) => p.categoryId === id || p.subcategoryId === id
         );
         if (productsUsingCategory.length > 0) {
           setError(
@@ -421,8 +465,24 @@ const Dashboard = () => {
           setTimeout(() => setError(null), 3000);
           return;
         }
-        await deleteDoc(doc(db, "lumixing-categories", id));
-        setCategories(categories.filter((c) => c.id !== id));
+        if (!isSubcategory) {
+          const subcategoriesUsingCategory = subcategories.filter(
+            (s) => s.parentCategoryId === id
+          );
+          if (subcategoriesUsingCategory.length > 0) {
+            setError(
+              "Cannot delete main category: It has associated subcategories."
+            );
+            setTimeout(() => setError(null), 3000);
+            return;
+          }
+        }
+        await deleteDoc(doc(db, "s-tone-categories", id));
+        if (isSubcategory) {
+          setSubcategories(subcategories.filter((c) => c.id !== id));
+        } else {
+          setCategories(categories.filter((c) => c.id !== id));
+        }
         setSuccess("Category deleted successfully!");
         setTimeout(() => setSuccess(null), 3000);
       } catch (err) {
@@ -435,27 +495,28 @@ const Dashboard = () => {
 
   const handleCategoryEdit = (category) => {
     setEditingCategory(category);
-    setNewCategoryName(category.name);
+    setNewCategory({
+      name: category.name,
+      isSubcategory: category.isSubcategory,
+      parentCategoryId: category.parentCategoryId || "",
+    });
   };
 
-  const getCategoryDetails = (categoryId) => {
-    const category = categories.find((cat) => cat.id === categoryId);
-    return category
-      ? { name: category.name, url: category.url }
-      : { name: "Unknown", url: "#" };
+  const getCategoryDetails = (categoryId, subcategoryId) => {
+    const category = categories.find((cat) => cat.id === categoryId) || {
+      name: "Unknown",
+      url: "#",
+    };
+    const subcategory = subcategories.find(
+      (sub) => sub.id === subcategoryId
+    ) || { name: "Unknown" };
+    return {
+      categoryName: category.name,
+      categoryUrl: category.url,
+      subcategoryName: subcategory.name,
+    };
   };
 
-  const isSmartphoneCategory = (categoryId) => {
-    const category = categories.find((cat) => cat.id === categoryId);
-    return (
-      category &&
-      ["iphones", "androids", "iphone", "android", "ipads", "ipad"].includes(
-        category.name.toLowerCase()
-      )
-    );
-  };
-
-  // Format timestamp to readable date
   const formatDate = (timestamp) => {
     if (!timestamp) return "N/A";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -469,74 +530,42 @@ const Dashboard = () => {
     });
   };
 
-  // Determine payment type
   const getPaymentType = (order) => {
     return order.chargeId && order.hostedUrl ? "Crypto" : "Regular";
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
+      <div className="min-h-screen bg-whitesmoke flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-[#4A5D23]"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
+    <div className="min-h-screen bg-whitesmoke p-4 sm:p-8">
       <div className="container mx-auto max-w-7xl">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">
+        <h1
+          className="text-4xl font-bold text-[#4A5D23] mb-8 text-center"
+          data-aos="fade-up"
+        >
           Admin Dashboard
         </h1>
 
-        {success && (
-          <div className="mb-6 p-4 bg-green-100 text-green-800 rounded-lg shadow-md flex items-center">
-            <svg
-              className="w-6 h-6 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            {success}
-          </div>
-        )}
-        {error && (
-          <div className="mb-6 p-4 bg-red-100 text-red-800 rounded-lg shadow-md flex items-center">
-            <svg
-              className="w-6 h-6 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-            {error}
-          </div>
-        )}
+        <AlertMessages success={success} error={error} />
 
         <div className="mb-8">
           <div
             className="flex space-x-4 overflow-x-auto sm:justify-center"
             role="tablist"
+            data-aos="fade-up"
           >
             <button
               onClick={() => setActiveTab("products")}
-              className={`px-4 py-2 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`px-4 py-2 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A5D23] ${
                 activeTab === "products"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-[#4A5D23] text-white"
+                  : "bg-gray-200 text-[#4A5D23] hover:bg-gray-300"
               }`}
               role="tab"
               aria-selected={activeTab === "products"}
@@ -546,10 +575,10 @@ const Dashboard = () => {
             </button>
             <button
               onClick={() => setActiveTab("categories")}
-              className={`px-4 py-2 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`px-4 py-2 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A5D23] ${
                 activeTab === "categories"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-[#4A5D23] text-white"
+                  : "bg-gray-200 text-[#4A5D23] hover:bg-gray-300"
               }`}
               role="tab"
               aria-selected={activeTab === "categories"}
@@ -559,10 +588,10 @@ const Dashboard = () => {
             </button>
             <button
               onClick={() => setActiveTab("orders")}
-              className={`px-4 py-2 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`px-4 py-2 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A5D23] ${
                 activeTab === "orders"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-[#4A5D23] text-white"
+                  : "bg-gray-200 text-[#4A5D23] hover:bg-gray-300"
               }`}
               role="tab"
               aria-selected={activeTab === "orders"}
@@ -581,327 +610,24 @@ const Dashboard = () => {
               activeTab === "products" ? "block" : "hidden sm:block"
             }`}
           >
-            <section className="bg-white p-6 rounded-xl shadow-lg mb-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                {editingProduct ? "Edit Product" : "Add New Product"}
-              </h2>
-              <form onSubmit={handleProductSubmit} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="title"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Product Title
-                  </label>
-                  <input
-                    type="text"
-                    id="title"
-                    name="title"
-                    value={
-                      editingProduct ? editingProduct.title : newProduct.title
-                    }
-                    onChange={handleProductInputChange}
-                    placeholder="Enter product title"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    required
-                    aria-label="Product Title"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Product Description
-                  </label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    value={
-                      editingProduct
-                        ? editingProduct.description
-                        : newProduct.description
-                    }
-                    onChange={handleProductInputChange}
-                    placeholder="Enter product description"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    rows="4"
-                    required
-                    aria-label="Product Description"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="imageFile"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Product Image
-                  </label>
-                  <input
-                    type="file"
-                    id="imageFile"
-                    name="imageFile"
-                    accept="image/jpeg,image/png"
-                    onChange={handleProductInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-colors"
-                    required={!editingProduct}
-                    aria-label="Upload Product Image"
-                  />
-                  {(editingProduct
-                    ? editingProduct.imagePreview
-                    : newProduct.imagePreview) && (
-                    <div className="mt-4 flex items-center space-x-4">
-                      <img
-                        src={
-                          editingProduct
-                            ? editingProduct.imagePreview
-                            : newProduct.imagePreview
-                        }
-                        alt={
-                          editingProduct
-                            ? `${editingProduct.title || "Product"} preview`
-                            : `${newProduct.title || "Product"} preview`
-                        }
-                        className="h-24 w-24 object-cover rounded-lg shadow-md"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleRemoveImage}
-                        className="text-red-600 hover:underline font-medium"
-                      >
-                        Remove Image
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="categoryId"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Category
-                  </label>
-                  <select
-                    id="categoryId"
-                    name="categoryId"
-                    value={
-                      editingProduct
-                        ? editingProduct.categoryId
-                        : newProduct.categoryId
-                    }
-                    onChange={handleProductInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    required
-                    aria-label="Select Category"
-                  >
-                    <option value="" disabled>
-                      Select Category
-                    </option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label
-                    htmlFor="price"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Price (USD)
-                  </label>
-                  <input
-                    type="number"
-                    id="price"
-                    name="price"
-                    value={
-                      editingProduct ? editingProduct.price : newProduct.price
-                    }
-                    onChange={handleProductInputChange}
-                    placeholder="Enter price in USD (e.g., 999.99)"
-                    step="0.01"
-                    min="0"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    required
-                    aria-label="Product Price in USD"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="quantity"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    id="quantity"
-                    name="quantity"
-                    value={
-                      editingProduct
-                        ? editingProduct.quantity
-                        : newProduct.quantity
-                    }
-                    onChange={handleProductInputChange}
-                    placeholder="Enter quantity (e.g., 100)"
-                    min="0"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    required
-                    aria-label="Product Quantity"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="colors"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Colors (comma-separated)
-                  </label>
-                  <input
-                    type="text"
-                    id="colors"
-                    name="colors"
-                    value={
-                      editingProduct ? editingProduct.colors : newProduct.colors
-                    }
-                    onChange={handleProductInputChange}
-                    placeholder="Enter colors (e.g., Black, Silver, Blue)"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    aria-label="Product Colors"
-                  />
-                </div>
-                {isSmartphoneCategory(
-                  editingProduct
-                    ? editingProduct.categoryId
-                    : newProduct.categoryId
-                ) && (
-                  <div>
-                    <label
-                      htmlFor="storage"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Storage (e.g., 128GB, 256GB)
-                    </label>
-                    <input
-                      type="text"
-                      id="storage"
-                      name="storage"
-                      value={
-                        editingProduct
-                          ? editingProduct.storage
-                          : newProduct.storage
-                      }
-                      onChange={handleProductInputChange}
-                      placeholder="Enter storage (e.g., 128GB, 256GB)"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                      aria-label="Product Storage"
-                    />
-                  </div>
-                )}
-                <div className="flex space-x-4">
-                  <button
-                    type="submit"
-                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                    disabled={loading}
-                  >
-                    {editingProduct ? "Update Product" : "Add Product"}
-                  </button>
-                  {editingProduct && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (editingProduct.imagePreview) {
-                          URL.revokeObjectURL(editingProduct.imagePreview);
-                        }
-                        setEditingProduct(null);
-                      }}
-                      className="flex-1 bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors font-medium"
-                    >
-                      Cancel Edit
-                    </button>
-                  )}
-                </div>
-              </form>
-            </section>
-
-            <section className="bg-white p-6 rounded-xl shadow-lg mb-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                Manage Products
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full table-auto border-collapse">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Title
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((product) => {
-                      const { name } = getCategoryDetails(product.categoryId);
-                      return (
-                        <tr
-                          key={product.id}
-                          className="border-b hover:bg-gray-50"
-                        >
-                          <td className="p-4 text-gray-800">{product.title}</td>
-                          <td className="p-4">
-                            <button
-                              onClick={() =>
-                                alert(
-                                  `Product ID: ${product.id}\n` +
-                                    `Title: ${product.title}\n` +
-                                    `Description: ${product.description}\n` +
-                                    `Image URL: ${
-                                      product.imageUrl || "N/A"
-                                    }\n` +
-                                    `Category: ${name}\n` +
-                                    `Price: $${
-                                      product.price
-                                        ? product.price.toFixed(2)
-                                        : "N/A"
-                                    }\n` +
-                                    `Quantity: ${product.quantity ?? "N/A"}\n` +
-                                    `Colors: ${
-                                      product.colors
-                                        ? product.colors.join(", ")
-                                        : "N/A"
-                                    }\n` +
-                                    `Storage: ${product.storage || "N/A"}\n` +
-                                    `Created At: ${formatDate(
-                                      product.createdAt
-                                    )}`
-                                )
-                              }
-                              className="text-blue-600 hover:underline mr-4 font-medium"
-                            >
-                              View Details
-                            </button>
-                            <button
-                              onClick={() => handleProductEdit(product)}
-                              className="text-blue-600 hover:underline mr-4 font-medium"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleProductDelete(product.id)}
-                              className="text-red-600 hover:underline font-medium"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            <ProductForm
+              editingProduct={editingProduct}
+              newProduct={newProduct}
+              categories={categories}
+              subcategories={subcategories}
+              handleProductInputChange={handleProductInputChange}
+              handleRemoveImage={handleRemoveImage}
+              handleProductSubmit={handleProductSubmit}
+              setEditingProduct={setEditingProduct}
+              loading={loading}
+            />
+            <ProductList
+              products={products}
+              getCategoryDetails={getCategoryDetails}
+              handleProductEdit={handleProductEdit}
+              handleProductDelete={handleProductDelete}
+              formatDate={formatDate}
+            />
           </div>
 
           <div
@@ -911,109 +637,21 @@ const Dashboard = () => {
               activeTab === "categories" ? "block" : "hidden sm:block"
             }`}
           >
-            <section className="bg-white p-6 rounded-xl shadow-lg mb-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                {editingCategory ? "Edit Category" : "Add New Category"}
-              </h2>
-              <form onSubmit={handleCategorySubmit} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Category Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={
-                      editingCategory ? editingCategory.name : newCategoryName
-                    }
-                    onChange={handleCategoryInputChange}
-                    placeholder="Enter category name (e.g., iPhone)"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    required
-                    aria-label="Category Name"
-                  />
-                </div>
-                <div className="flex space-x-4">
-                  <button
-                    type="submit"
-                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                  >
-                    {editingCategory ? "Update Category" : "Add Category"}
-                  </button>
-                  {editingCategory && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingCategory(null);
-                        setNewCategoryName("");
-                      }}
-                      className="flex-1 bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors font-medium"
-                    >
-                      Cancel Edit
-                    </button>
-                  )}
-                </div>
-              </form>
-            </section>
-
-            <section className="bg-white p-6 rounded-xl shadow-lg mb-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                Manage Categories
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full table-auto border-collapse">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Name
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        URL
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map((category) => (
-                      <tr
-                        key={category.id}
-                        className="border-b hover:bg-gray-50"
-                      >
-                        <td className="p-4 text-gray-800">{category.name}</td>
-                        <td className="p-4">
-                          <Link
-                            to={category.url}
-                            className="text-blue-600 hover:underline"
-                          >
-                            {category.url}
-                          </Link>
-                        </td>
-                        <td className="p-4">
-                          <button
-                            onClick={() => handleCategoryEdit(category)}
-                            className="text-blue-600 hover:underline mr-4 font-medium"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleCategoryDelete(category.id)}
-                            className="text-red-600 hover:underline font-medium"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            <CategoryForm
+              editingCategory={editingCategory}
+              newCategory={newCategory}
+              categories={categories}
+              handleCategoryInputChange={handleCategoryInputChange}
+              handleCategorySubmit={handleCategorySubmit}
+              setEditingCategory={setEditingCategory}
+              setNewCategory={setNewCategory}
+            />
+            <CategoryList
+              categories={categories}
+              subcategories={subcategories}
+              handleCategoryEdit={handleCategoryEdit}
+              handleCategoryDelete={handleCategoryDelete}
+            />
           </div>
 
           <div
@@ -1023,230 +661,11 @@ const Dashboard = () => {
               activeTab === "orders" ? "block" : "hidden sm:block"
             }`}
           >
-            <section className="bg-white p-6 rounded-xl shadow-lg">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                Customer Orders
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full table-auto border-collapse">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Order ID
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Customer
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Product
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Amount (USD)
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Payment Type
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Status
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Order Date
-                      </th>
-                      <th className="p-4 text-left text-sm font-semibold text-gray-700">
-                        Details
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map((order) => {
-                      const isCrypto = order.chargeId && order.hostedUrl;
-                      const customer = isCrypto
-                        ? order.metadata?.customer
-                        : order.customer;
-                      const cartItems = isCrypto
-                        ? order.metadata?.cartItems
-                        : order.cartItems;
-                      return (
-                        <tr
-                          key={order.id}
-                          className="border-b hover:bg-gray-50"
-                        >
-                          <td className="p-4 text-gray-800">
-                            {order.chargeId || order.transactionRef || order.id}
-                          </td>
-                          <td className="p-4 text-gray-800">
-                            {customer && customer.name ? customer.name : "N/A"}
-                          </td>
-                          <td className="p-4 text-gray-800">
-                            {cartItems &&
-                            cartItems.length > 0 &&
-                            cartItems[0].name
-                              ? cartItems[0].name
-                              : "N/A"}
-                            {cartItems &&
-                              cartItems.length > 0 &&
-                              cartItems[0].selectedColor && (
-                                <span className="text-gray-600">
-                                  {" (" + cartItems[0].selectedColor + ")"}
-                                </span>
-                              )}
-                          </td>
-                          <td className="p-4 text-gray-800">
-                            $
-                            {order.amount || order.totalAmount
-                              ? parseFloat(
-                                  order.amount || order.totalAmount
-                                ).toFixed(2)
-                              : "N/A"}
-                          </td>
-                          <td className="p-4">
-                            <span
-                              className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                                getPaymentType(order) === "Crypto"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : "bg-blue-100 text-blue-800"
-                              }`}
-                            >
-                              {getPaymentType(order)}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <span
-                              className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                                order.status === "created"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : order.status === "confirmed"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {order.status || "N/A"}
-                            </span>
-                          </td>
-                          <td className="p-4 text-gray-800">
-                            {formatDate(order.createdAt)}
-                          </td>
-                          <td className="p-4">
-                            <button
-                              onClick={() =>
-                                alert(
-                                  `Order ID: ${
-                                    order.chargeId ||
-                                    order.transactionRef ||
-                                    order.id
-                                  }\n` +
-                                    `Customer Name: ${
-                                      customer && customer.name
-                                        ? customer.name
-                                        : "N/A"
-                                    }\n` +
-                                    `Email: ${
-                                      customer && customer.email
-                                        ? customer.email
-                                        : "N/A"
-                                    }\n` +
-                                    `Phone: ${
-                                      customer && customer.phone
-                                        ? customer.phone
-                                        : "N/A"
-                                    }\n` +
-                                    `Location: ${
-                                      customer && customer.location
-                                        ? customer.location
-                                        : "N/A"
-                                    }\n` +
-                                    `Product: ${
-                                      cartItems &&
-                                      cartItems.length > 0 &&
-                                      cartItems[0].name
-                                        ? cartItems[0].name
-                                        : "N/A"
-                                    }\n` +
-                                    `Product ID: ${
-                                      cartItems &&
-                                      cartItems.length > 0 &&
-                                      cartItems[0].id
-                                        ? cartItems[0].id
-                                        : "N/A"
-                                    }\n` +
-                                    `Quantity: ${
-                                      cartItems &&
-                                      cartItems.length > 0 &&
-                                      cartItems[0].quantity
-                                        ? cartItems[0].quantity
-                                        : "N/A"
-                                    }\n` +
-                                    `Color: ${
-                                      cartItems &&
-                                      cartItems.length > 0 &&
-                                      cartItems[0].selectedColor
-                                        ? cartItems[0].selectedColor
-                                        : "N/A"
-                                    }\n` +
-                                    `Product Price: $${
-                                      cartItems &&
-                                      cartItems.length > 0 &&
-                                      cartItems[0].price
-                                        ? cartItems[0].price.toFixed(2)
-                                        : "N/A"
-                                    }\n` +
-                                    `Subtotal: $${
-                                      order.subtotal
-                                        ? order.subtotal.toFixed(2)
-                                        : "N/A"
-                                    }\n` +
-                                    `Shipping Fee: $${
-                                      order.shippingFee
-                                        ? order.shippingFee.toFixed(2)
-                                        : "N/A"
-                                    }\n` +
-                                    `Total Amount: $${
-                                      order.amount || order.totalAmount
-                                        ? parseFloat(
-                                            order.amount || order.totalAmount
-                                          ).toFixed(2)
-                                        : "N/A"
-                                    }\n` +
-                                    `Order Date: ${formatDate(
-                                      order.createdAt
-                                    )}\n` +
-                                    `Webhook Received: ${
-                                      formatDate(order.webhookReceivedAt) ||
-                                      "N/A"
-                                    }\n` +
-                                    `Webhook Event: ${
-                                      order.webhookEvent || "N/A"
-                                    }\n` +
-                                    `Charge ID: ${order.chargeId || "N/A"}\n` +
-                                    `Crypto Payment URL: ${
-                                      order.hostedUrl || "N/A"
-                                    }\n` +
-                                    `Transaction Reference: ${
-                                      order.transactionRef || "N/A"
-                                    }\n` +
-                                    `Metadata: ${
-                                      order.metadata
-                                        ? JSON.stringify(
-                                            order.metadata,
-                                            null,
-                                            2
-                                          )
-                                        : "N/A"
-                                    }`
-                                )
-                              }
-                              className="text-blue-600 hover:underline font-medium"
-                            >
-                              View Details
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            <OrderList
+              orders={orders}
+              getPaymentType={getPaymentType}
+              formatDate={formatDate}
+            />
           </div>
         </div>
       </div>

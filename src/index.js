@@ -40,7 +40,7 @@ const Root = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-#4A5D23-600"></div>
       </div>
     );
   }
