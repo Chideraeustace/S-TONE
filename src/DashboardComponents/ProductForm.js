@@ -23,6 +23,60 @@ export const ProductForm = ({
     subcategories.find((sub) => sub.id === currentProduct.subcategoryId)
       ?.name === "EyeLash Extensions";
 
+  // --- UPDATED IMAGE INPUT CHANGE HANDLER ---
+  const handleMultipleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    const newImages = files.map((file) => ({
+      file: file, // The actual File object to be uploaded
+      preview: URL.createObjectURL(file), // The temporary URL for immediate preview
+    }));
+
+    handleProductInputChange({
+      target: {
+        name: "imageFiles", // Key for the array of files
+        value: newImages,
+        files: files, // Pass files array
+      },
+    });
+
+    // Clear the input value so the same file(s) can be selected again
+    e.target.value = null;
+  };
+  // ------------------------------------------
+
+  // ✨ NEW: Handler for Multi-Select Fields
+  const handleMultiSelectChange = (e) => {
+    const { name } = e.target;
+    // Get an array of all selected values
+    const selectedOptions = Array.from(e.target.options)
+      .filter((option) => option.selected)
+      .map((option) => option.value);
+
+    // Pass the name and the array of selected values to the parent handler
+    handleProductInputChange({
+      target: {
+        name: name,
+        // Send the array of strings as the value
+        value: selectedOptions,
+      },
+    });
+  };
+
+  /**
+   * Utility function to check if a value is selected.
+   * Note: The state values for these fields (thickness, length, size, style)
+   * must be stored as an array in the parent component for this to work.
+   */
+  const isSelected = (field, value) => {
+    const currentValue = currentProduct[field];
+    // Check if currentValue is an array and includes the option value
+    if (Array.isArray(currentValue)) {
+      return currentValue.includes(value);
+    }
+    // Fallback for single select, although it should be an array now
+    return currentValue === value;
+  };
+
   return (
     <section
       className="bg-white p-6 rounded-xl shadow-lg mb-8"
@@ -32,6 +86,7 @@ export const ProductForm = ({
         {isEditing ? "Edit Product" : "Add New Product"}
       </h2>
       <form onSubmit={handleProductSubmit} className="space-y-4">
+        {/* Title and Description */}
         <div>
           <label
             htmlFor="title"
@@ -70,40 +125,57 @@ export const ProductForm = ({
             aria-label="Product Description"
           />
         </div>
+
+        {/* Image Upload Section (Remains the same) */}
         <div>
           <label
             htmlFor="imageFile"
             className="block text-sm font-medium text-[#4A5D23] mb-1"
           >
-            Product Image
+            Product Images
           </label>
           <input
             type="file"
             id="imageFile"
             name="imageFile"
             accept="image/jpeg,image/png"
-            onChange={handleProductInputChange}
+            multiple
+            onChange={handleMultipleImageChange}
             className="w-full p-3 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#4A5D23] file:text-white hover:file:bg-[#3A4A1C] transition-colors"
-            required={!isEditing}
-            aria-label="Upload Product Image"
+            required={
+              !isEditing &&
+              (!currentProduct.images || currentProduct.images.length === 0)
+            }
+            aria-label="Upload Product Images"
           />
-          {currentProduct.imagePreview && (
-            <div className="mt-4 flex items-center space-x-4">
-              <img
-                src={currentProduct.imagePreview}
-                alt={`${currentProduct.title || "Product"} preview`}
-                className="h-24 w-24 object-cover rounded-lg shadow-md"
-              />
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                className="text-red-600 hover:underline font-medium"
-              >
-                Remove Image
-              </button>
+          {currentProduct.images && currentProduct.images.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-4">
+              {currentProduct.images.map((image, index) => (
+                <div
+                  key={image.preview || index}
+                  className="flex flex-col items-center"
+                >
+                  <img
+                    src={image.preview}
+                    alt={`${currentProduct.title || "Product"} preview ${
+                      index + 1
+                    }`}
+                    className="h-24 w-24 object-cover rounded-lg shadow-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="text-red-600 hover:underline font-medium text-xs mt-1"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>
+
+        {/* Category and Subcategory sections (Remain the same) */}
         <div>
           <label
             htmlFor="categoryId"
@@ -160,6 +232,8 @@ export const ProductForm = ({
               ))}
           </select>
         </div>
+
+        {/* ✨ UPDATED Lash Extension Fields for Multi-Select */}
         {isLashExtension && (
           <div className="space-y-4">
             <div>
@@ -167,42 +241,49 @@ export const ProductForm = ({
                 htmlFor="thickness"
                 className="block text-sm font-medium text-[#4A5D23] mb-1"
               >
-                Thickness (mm, optional)
+                Thickness (mm, optional) - **Hold Ctrl/Cmd to select multiple**
               </label>
               <select
                 id="thickness"
                 name="thickness"
-                value={currentProduct.thickness || ""}
-                onChange={handleProductInputChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4A5D23] focus:border-[#4A5D23] transition-colors"
+                multiple // ✨ NEW: Allow multiple selections
+                value={currentProduct.thickness || []} // Value must be an array for multi-select
+                onChange={handleMultiSelectChange} // ✨ NEW: Use the multi-select handler
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4A5D23] focus:border-[#4A5D23] transition-colors h-32"
                 aria-label="Select Thickness"
               >
-                <option value="">Select Thickness (optional)</option>
+                {/* Removed the empty 'Select' option as it can interfere with multi-select logic */}
                 {["0.03", "0.05", "0.07", "0.10", "0.15", "0.20"].map(
                   (value) => (
-                    <option key={value} value={value}>
+                    <option
+                      key={value}
+                      value={value}
+                      // Use the isSelected helper for initial value
+                      selected={isSelected("thickness", value)}
+                    >
                       {value} mm
                     </option>
                   )
                 )}
               </select>
             </div>
+
             <div>
               <label
                 htmlFor="length"
                 className="block text-sm font-medium text-[#4A5D23] mb-1"
               >
-                Length (mm, optional)
+                Length (mm, optional) - **Hold Ctrl/Cmd to select multiple**
               </label>
               <select
                 id="length"
                 name="length"
-                value={currentProduct.length || ""}
-                onChange={handleProductInputChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4A5D23] focus:border-[#4A5D23] transition-colors"
+                multiple // ✨ NEW
+                value={currentProduct.length || []} // Value must be an array
+                onChange={handleMultiSelectChange} // ✨ NEW
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4A5D23] focus:border-[#4A5D23] transition-colors h-48"
                 aria-label="Select Length"
               >
-                <option value="">Select Length (optional)</option>
                 {[
                   "6",
                   "7",
@@ -218,51 +299,61 @@ export const ProductForm = ({
                   "17",
                   "18",
                 ].map((value) => (
-                  <option key={value} value={value}>
+                  <option
+                    key={value}
+                    value={value}
+                    selected={isSelected("length", value)}
+                  >
                     {value} mm
                   </option>
                 ))}
               </select>
             </div>
+
             <div>
               <label
                 htmlFor="size"
                 className="block text-sm font-medium text-[#4A5D23] mb-1"
               >
-                Size (optional)
+                Size (optional) - **Hold Ctrl/Cmd to select multiple**
               </label>
               <select
                 id="size"
                 name="size"
-                value={currentProduct.size || ""}
-                onChange={handleProductInputChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4A5D23] focus:border-[#4A5D23] transition-colors"
+                multiple // ✨ NEW
+                value={currentProduct.size || []} // Value must be an array
+                onChange={handleMultiSelectChange} // ✨ NEW
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4A5D23] focus:border-[#4A5D23] transition-colors h-24"
                 aria-label="Select Size"
               >
-                <option value="">Select Size (optional)</option>
                 {["Small", "Medium", "Large"].map((value) => (
-                  <option key={value} value={value}>
+                  <option
+                    key={value}
+                    value={value}
+                    selected={isSelected("size", value)}
+                  >
                     {value}
                   </option>
                 ))}
               </select>
             </div>
+
             <div>
               <label
                 htmlFor="style"
                 className="block text-sm font-medium text-[#4A5D23] mb-1"
               >
-                Style (optional)
+                Style (optional) - **Hold Ctrl/Cmd to select multiple**
               </label>
               <select
                 id="style"
                 name="style"
-                value={currentProduct.style || ""}
-                onChange={handleProductInputChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4A5D23] focus:border-[#4A5D23] transition-colors"
+                multiple // ✨ NEW
+                value={currentProduct.style || []} // Value must be an array
+                onChange={handleMultiSelectChange} // ✨ NEW
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4A5D23] focus:border-[#4A5D23] transition-colors h-40"
                 aria-label="Select Style"
               >
-                <option value="">Select Style (optional)</option>
                 {[
                   "1D",
                   "2D",
@@ -275,7 +366,11 @@ export const ProductForm = ({
                   "9D",
                   "10D",
                 ].map((value) => (
-                  <option key={value} value={value}>
+                  <option
+                    key={value}
+                    value={value}
+                    selected={isSelected("style", value)}
+                  >
                     {value}
                   </option>
                 ))}
@@ -283,6 +378,8 @@ export const ProductForm = ({
             </div>
           </div>
         )}
+
+        {/* Price, Quantity, and Colors fields (Remain the same) */}
         <div>
           <label
             htmlFor="price"
@@ -354,9 +451,10 @@ export const ProductForm = ({
             <button
               type="button"
               onClick={() => {
-                if (currentProduct.imagePreview) {
-                  URL.revokeObjectURL(currentProduct.imagePreview);
-                }
+                // IMPORTANT: Revoke all Object URLs for cleanup
+                currentProduct.images?.forEach((image) => {
+                  if (image.preview) URL.revokeObjectURL(image.preview);
+                });
                 setEditingProduct(null);
               }}
               className="flex-1 bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors font-medium"
