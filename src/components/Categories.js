@@ -1,37 +1,41 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { db } from "../Firebase";
+import { Link, useLocation } from "react-router-dom";
+import { db } from "../Firebase"; // Adjust the path to your Firebase config
 import { collection, getDocs } from "firebase/firestore";
 
 const Category = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const location = useLocation();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch categories
         const categorySnapshot = await getDocs(
-          collection(db, "lumixing-categories")
+          collection(db, "s-tone-categories")
         );
-        const categoryList = categorySnapshot.docs.map((doc) => ({
+        const categoriesData = categorySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        setCategories(categoryList);
 
-        // Fetch all products
-        const productSnapshot = await getDocs(
-          collection(db, "lumixing-product")
-        );
-        const productList = productSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setProducts(productList);
+        // Filter top-level categories and associate subcategories
+        const topLevelCategories = categoriesData
+          .filter((cat) => !cat.isSubcategory)
+          .map((category) => ({
+            ...category,
+            subcategories: categoriesData.filter(
+              (subcat) =>
+                subcat.isSubcategory && subcat.parentCategoryId === category.id
+            ),
+          }));
+
+        setCategories(topLevelCategories);
         setLoading(false);
       } catch (err) {
         setError("Failed to fetch data");
@@ -43,29 +47,101 @@ const Category = () => {
     fetchData();
   }, []);
 
-  // Filter products based on selected category
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        // Fetch all products
+        const productSnapshot = await getDocs(
+          collection(db, "s-tone-products")
+        );
+        const productList = productSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setProducts(productList);
+      } catch (err) {
+        setError("Failed to fetch products");
+        console.error(err);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // Determine selected category based on URL
+  useEffect(() => {
+    const path = location.pathname;
+    const matchedCategory = categories
+      .flatMap((cat) => [
+        { ...cat, isSubcategory: false },
+        ...cat.subcategories.map((subcat) => ({
+          ...subcat,
+          parentName: cat.name,
+        })),
+      ])
+      .find((cat) => cat.url === path);
+
+    if (matchedCategory) {
+      setSelectedCategory(matchedCategory.id);
+    } else {
+      setSelectedCategory("all");
+    }
+  }, [location.pathname, categories]);
+
+  // Filter categories and products based on search term
+  const filteredCategories = categories
+    .map((category) => ({
+      ...category,
+      subcategories: category.subcategories.filter((subcat) =>
+        subcat.name.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    }))
+    .filter(
+      (category) =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        category.subcategories.length > 0
+    );
+
   const filteredProducts =
     selectedCategory === "all"
-      ? products
-      : products.filter((product) => product.categoryId === selectedCategory);
-
-  // Random verification years (4–10 years)
-  const getRandomVerificationYears = () => Math.floor(Math.random() * 7) + 4;
+      ? products.filter(
+          (product) =>
+            product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.description.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : products
+          .filter((product) =>
+            categories
+              .flatMap((cat) => [
+                { id: cat.id, isSubcategory: false },
+                ...cat.subcategories,
+              ])
+              .find((cat) => cat.id === selectedCategory)?.isSubcategory
+              ? product.subcategoryId === selectedCategory
+              : product.categoryId === selectedCategory
+          )
+          .filter(
+            (product) =>
+              product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              product.description
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase())
+          );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-b from-pink-50 to-cream-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-pink-500"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="p-4 bg-red-100 text-red-800 rounded-lg flex items-center">
+      <div className="min-h-screen bg-gradient-to-b from-pink-50 to-cream-100 flex items-center justify-center">
+        <div className="p-3 bg-red-100 text-red-800 rounded-lg flex items-center">
           <svg
-            className="w-6 h-6 mr-2"
+            className="w-5 h-5 mr-2"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -84,117 +160,134 @@ const Category = () => {
     );
   }
 
+  // Find the current category or subcategory for the title
+  const currentCategory = categories
+    .flatMap((cat) => [
+      { ...cat, isSubcategory: false },
+      ...cat.subcategories.map((subcat) => ({
+        ...subcat,
+        parentName: cat.name,
+      })),
+    ])
+    .find((cat) => cat.id === selectedCategory);
+
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 bg-gray-50">
+    <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 bg-gradient-to-b from-white-50 to-cream-100">
       <h1
-        className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center"
+        className="text-3xl sm:text-4xl font-serif font-bold text-gray-800 mb-8 text-center tracking-tight"
         data-aos="fade-up"
       >
-        Shop by Category
+        {currentCategory
+          ? currentCategory.isSubcategory
+            ? `${currentCategory.parentName} - ${currentCategory.name}`
+            : currentCategory.name
+          : "Discover Our Luxe Collection"}
       </h1>
 
-      {/* Tabs */}
-      <div className="mb-8">
-        <div className="flex flex-wrap gap-2 sm:gap-4 border-b border-gray-200">
-          <button
-            onClick={() => setSelectedCategory("all")}
-            className={`px-4 py-2 text-sm sm:text-base font-medium rounded-t-lg transition-colors duration-200 ${
-              selectedCategory === "all"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+      {/* Search Bar and Category Dropdown */}
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-10 gap-4">
+        <div className="relative w-full sm:w-1/2">
+          <input
+            type="text"
+            placeholder="Search products or categories..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full p-2 pl-8 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white text-gray-700 placeholder-gray-400 transition-all duration-300"
+          />
+          <svg
+            className="w-4 h-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
           >
-            All Products
-          </button>
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`px-4 py-2 text-sm sm:text-base font-medium rounded-t-lg transition-colors duration-200 ${
-                selectedCategory === category.id
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {category.name}
-            </button>
-          ))}
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
         </div>
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="w-full sm:w-1/2 p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4A5D23] bg-white text-gray-700 transition-all duration-300"
+        >
+          <option value="all">All Products</option>
+          {filteredCategories.map((category) => (
+            <optgroup
+              key={category.id}
+              label={category.name}
+              className="font-semibold text-gray-800"
+            >
+              <option value={category.id} className="font-normal">
+                {category.name}
+              </option>
+              {category.subcategories.map((subcategory) => (
+                <option
+                  key={subcategory.id}
+                  value={subcategory.id}
+                  className="pl-4"
+                >
+                  {subcategory.name}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
       </div>
 
       {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product, index) => (
             <div
               key={product.id}
-              className="bg-white rounded-xl overflow-hidden transform transition-all duration-300 hover:-translate-y-1 flex flex-row"
+              className="bg-white rounded-lg overflow-hidden shadow-md transform transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
               data-aos="fade-up"
               data-aos-delay={index * 100}
             >
-              <div className="w-1/3 flex items-center justify-center bg-white">
+              <div className="relative flex items-center justify-center bg-white p-4">
                 <img
-                  src={product.imageUrl}
+                  src={
+                    product.images?.[0]?.url ||
+                    "https://via.placeholder.com/150"
+                  }
                   alt={product.title}
-                  className="w-full h-48 object-contain"
+                  className="w-full h-48 object-contain transition-transform duration-300 hover:scale-105"
                 />
-              </div>
-              <div className="w-2/3 p-3 sm:p-4 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 truncate">
-                    {product.title}
-                  </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2">
-                    {product.description}
-                  </p>
-                  <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3">
-                    ${product.price ? product.price.toFixed(2) : "N/A"}
-                  </p>
-                  {/* If Firestore prices are in GHS, convert to USD here:
-                  <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3">
-                    ${(product.price ? (product.price * 0.064).toFixed(2) : "N/A")}
-                  </p>
-                  */}
-                  <div className="flex items-center text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3">
-                    <svg
-                      className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mr-1 sm:mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    Verified {getRandomVerificationYears()} yrs ago
-                  </div>
-                  <p
-                    className={`text-xs sm:text-sm mb-2 sm:mb-3 ${
+                {product.quantity <= 5 && (
+                  <span
+                    className={`absolute top-2 right-2 px-2 py-1 text-xs font-semibold rounded-full ${
                       product.quantity === 0
-                        ? "text-red-600"
-                        : product.quantity <= 5
-                        ? "text-yellow-600"
-                        : "text-gray-600"
+                        ? "bg-red-100 text-red-600"
+                        : "bg-yellow-100 text-yellow-600"
                     }`}
                   >
-                    {product.quantity === 0
-                      ? "Sold Out"
-                      : product.quantity <= 5
-                      ? "Limited Stock"
-                      : `Quantity Left: ${product.quantity}`}
+                    {product.quantity === 0 ? "Sold Out" : "Low Stock"}
+                  </span>
+                )}
+              </div>
+              <div className="p-4 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-gray-800 mb-1 truncate font-serif">
+                    {product.title}
+                  </h3>
+                  <p className="text-gray-600 text-xs mb-2 line-clamp-2">
+                    {product.description}
+                  </p>
+                  <p className="text-gray-800 text-lg font-bold mb-2 font-sans">
+                    ₵{product.price ? product.price.toFixed(2) : "N/A"}
                   </p>
                 </div>
                 <Link
                   to={`/product-details/${product.id}`}
-                  className={`inline-block px-3 py-1 sm:px-4 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-colors duration-200 ${
+                  className={`inline-block px-4 py-1 rounded-full font-medium text-xs transition-colors duration-300 ${
                     product.quantity === 0
-                      ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                      : "bg-blue-600 text-white hover:bg-blue-700"
-                  }`}
+                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                      : "bg-[#4A5D23] text-white hover:bg-pink-600"
+                  } text-center`}
                   aria-disabled={product.quantity === 0}
                   onClick={(e) => product.quantity === 0 && e.preventDefault()}
                 >
@@ -204,8 +297,8 @@ const Category = () => {
             </div>
           ))
         ) : (
-          <p className="text-gray-600 text-center col-span-full">
-            No products found in this category.
+          <p className="text-gray-600 text-center col-span-full font-serif text-base">
+            No products found for your search.
           </p>
         )}
       </div>

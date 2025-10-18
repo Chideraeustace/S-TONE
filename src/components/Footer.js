@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   BiLogoTwitter,
@@ -7,37 +8,62 @@ import {
   BiPhone,
   BiEnvelope,
 } from "react-icons/bi";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../Firebase";
 
 const Footer = () => {
-  const categories = [
-    { id: "lashes", name: "Lashes", url: "/category/lashes" },
-    { id: "nails", name: "Nails", url: "/category/nails" },
-    {
-      id: "semi-permanent",
-      name: "Semi-Permanent Makeup",
-      url: "/category/semi-permanent",
-    },
-    { id: "kits", name: "Kits", url: "/kits" },
-    { id: "glam-guide", name: "Glam Guide", url: "/glam-guide" },
-    { id: "learning-portal", name: "Learning Portal", url: "/learning-portal" },
-  ];
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categorySnapshot = await getDocs(
+          collection(db, "s-tone-categories")
+        );
+        const categoriesData = categorySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        // Filter top-level categories and associate subcategories
+        const topLevelCategories = categoriesData
+          .filter((cat) => !cat.isSubcategory)
+          .map((category) => ({
+            ...category,
+            subcategories: categoriesData.filter(
+              (subcat) =>
+                subcat.isSubcategory && subcat.parentCategoryId === category.id
+            ),
+          }));
+
+        setCategories(topLevelCategories);
+        setLoading(false);
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   return (
-    <footer className="bg-[#4A5D23] text-whitesmoke py-14 sm:py-20">
-      <div className="container mx-auto px-6 max-w-7xl">
+    <footer className="bg-gradient-to-b from-[#4A5D23] to-[#3A4A1C] text-[#F5F5F5] py-12">
+      <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
         {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <h5 className="text-2xl font-bold mb-4 text-whitesmoke">
+            <h5 className="text-lg font-serif font-bold mb-4 text-[#F5F5F5]">
               S-TONE Cosmetics
             </h5>
-            <p className="text-whitesmoke leading-relaxed mb-6">
+            <p className="text-[#F5F5F5] text-sm font-sans leading-relaxed mb-4">
               Your premier destination for premium lashes, nails, and
-              semi-permanent makeup. Free shipping to Ghana on orders over $100
+              semi-permanent makeup. Free shipping to Ghana on orders over ₵1000
               plus free brow mapping tools!
             </p>
-            <div className="flex space-x-4">
+            <div className="flex space-x-3">
               {[
                 { icon: BiLogoTwitter, link: "https://twitter.com" },
                 { icon: BiLogoFacebook, link: "https://facebook.com" },
@@ -48,30 +74,87 @@ const Footer = () => {
                   href={link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 rounded-full bg-gray-200 hover:bg-whitesmoke hover:text-[#4A5D23] transition-colors duration-300 text-xl"
+                  className="p-2 rounded-full bg-[#F5F5F5] hover:bg-[#E0E0E0] transition-colors duration-300 text-lg"
                 >
-                  <Icon className="text-[#4A5D23] hover:text-[#4A5D23]" />
+                  <Icon className="text-[#4A5D23]" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Shop */}
           <div>
-            <h5 className="text-lg font-semibold mb-5 text-whitesmoke border-l-4 border-whitesmoke pl-3">
-              Quick Links
+            <h5 className="text-base font-serif font-semibold mb-4 text-[#F5F5F5] border-l-4 border-[#F5F5F5] pl-3">
+              Shop
             </h5>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  to="/"
+                  className="text-[#F5F5F5] text-sm font-sans hover:text-[#E0E0E0] transition-colors duration-300"
+                >
+                  Home
+                </Link>
+              </li>
+              {loading ? (
+                <li className="text-[#F5F5F5] text-sm font-sans">
+                  Loading categories...
+                </li>
+              ) : (
+                categories.map((category) => (
+                  <li key={category.id}>
+                    <Link
+                      to={category.url}
+                      className="text-[#F5F5F5] text-sm font-sans hover:text-[#E0E0E0] transition-colors duration-300"
+                    >
+                      ➤ {category.name}
+                    </Link>
+                    {category.subcategories.map((subcat) => (
+                      <Link
+                        key={subcat.id}
+                        to={subcat.url}
+                        className="text-[#F5F5F5] text-sm font-sans hover:text-[#E0E0E0] transition-colors duration-300 block pl-4"
+                      >
+                        - {subcat.name}
+                      </Link>
+                    ))}
+                  </li>
+                ))
+              )}
               {[
-                { name: "Home", to: "/" },
-                { name: "About", to: "/about" },
-                { name: "Shop", to: "/category" },
-                { name: "Contact", to: "/contact" },
-              ].map((link, i) => (
-                <li key={i}>
+                { name: "Kits", url: "/kits" },
+                { name: "Glam Guide", url: "/glam-guide" },
+                { name: "Learning Portal", url: "/learning-portal" },
+              ].map((item) => (
+                <li key={item.url}>
                   <Link
-                    to={link.to}
-                    className="text-whitesmoke hover:text-gray-200 transition-colors duration-300"
+                    to={item.url}
+                    className="text-[#F5F5F5] text-sm font-sans hover:text-[#E0E0E0] transition-colors duration-300"
+                  >
+                    ➤ {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Helpful Links */}
+          <div>
+            <h5 className="text-base font-serif font-semibold mb-4 text-[#F5F5F5] border-l-4 border-[#F5F5F5] pl-3">
+              Helpful Links
+            </h5>
+            <ul className="space-y-2">
+              {[
+                { name: "FAQs", url: "/faqs" },
+                { name: "Testimonials", url: "/testimonials" },
+                { name: "Partner with us", url: "/partner" },
+                { name: "Our Story", url: "/our-story" },
+                { name: "Join the List", url: "/join-the-list" },
+              ].map((link) => (
+                <li key={link.url}>
+                  <Link
+                    to={link.url}
+                    className="text-[#F5F5F5] text-sm font-sans hover:text-[#E0E0E0] transition-colors duration-300"
                   >
                     {link.name}
                   </Link>
@@ -80,78 +163,130 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Categories */}
+          {/* Contact Us */}
           <div>
-            <h5 className="text-lg font-semibold mb-5 text-whitesmoke border-l-4 border-whitesmoke pl-3">
-              Categories
-            </h5>
-            <ul className="space-y-3">
-              {categories.map((category) => (
-                <li key={category.id}>
-                  <Link
-                    to={category.url}
-                    className="text-whitesmoke hover:text-gray-200 transition-colors duration-300"
-                  >
-                    ➤ {category.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h5 className="text-lg font-semibold mb-5 text-whitesmoke border-l-4 border-whitesmoke pl-3">
+            <h5 className="text-base font-serif font-semibold mb-4 text-[#F5F5F5] border-l-4 border-[#F5F5F5] pl-3">
               Contact Us
             </h5>
-            <ul className="space-y-4">
+            <ul className="space-y-3">
+              <li className="flex items-start">
+                <BiMap className="text-xl mr-2 text-[#F5F5F5] mt-1" />
+                <span className="text-[#F5F5F5] text-sm font-sans">
+                  <strong>UK Head Office</strong>
+                  <br />
+                  S-TONE Cosmetics, Shaguns International Ltd, Imagestor, Palace
+                  Gates, Bridge Rd, London N22 7SN, United Kingdom
+                </span>
+              </li>
               <li className="flex items-center">
-                <BiPhone className="text-2xl mr-3 text-whitesmoke" />
+                <BiPhone className="text-xl mr-2 text-[#F5F5F5]" />
                 <a
-                  href="tel:07545371740"
-                  className="text-whitesmoke hover:underline"
+                  href="tel:+447545371740"
+                  className="text-[#F5F5F5] text-sm font-sans hover:underline"
                 >
-                  07545371740
+                  +44 7545 371740
+                </a>
+              </li>
+              <li className="flex items-start">
+                <BiMap className="text-xl mr-2 text-[#F5F5F5] mt-1" />
+                <span className="text-[#F5F5F5] text-sm font-sans">
+                  <strong>Turkey Regional Office</strong>
+                  <br />
+                  S-TONE Cosmetics, Coins de beaute chez Fikirtepe, Mandira
+                  Caddeci, 34720 Evinpark, Kadikoy/Istanbul, Türkiye
+                </span>
+              </li>
+              <li className="flex items-center">
+                <BiPhone className="text-xl mr-2 text-[#F5F5F5]" />
+                <a
+                  href="tel:+905314566604"
+                  className="text-[#F5F5F5] text-sm font-sans hover:underline"
+                >
+                  +90 531 456 6604
                 </a>
               </li>
               <li className="flex items-center">
-                <BiEnvelope className="text-2xl mr-3 text-whitesmoke" />
+                <BiEnvelope className="text-xl mr-2 text-[#F5F5F5]" />
                 <a
                   href="mailto:info@stonecosmetics.com"
-                  className="text-whitesmoke hover:underline"
+                  className="text-[#F5F5F5] text-sm font-sans hover:underline"
                 >
                   info@stonecosmetics.com
                 </a>
-              </li>
-              <li className="flex items-center">
-                <BiMap className="text-2xl mr-3 text-whitesmoke" />
-                <span className="text-whitesmoke">
-                  S-TONE Cosmetics, Shaguns International Ltd, Imagestor,Palace
-                  Gates, Bridge Rd London N22 7SN
-                  <br /> United Kingdom
-                </span>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-14 pt-6 border-t border-gray-400 text-center">
-          <p className="text-whitesmoke">
-            &copy; 2025{" "}
-            <span className="text-whitesmoke font-semibold">
-              S-TONE Cosmetics
-            </span>
-            . All rights reserved.
+        {/* Newsletter */}
+        <div className="mt-10 pt-6 border-t border-[#F5F5F5]/30">
+          <h5 className="text-base font-serif font-semibold mb-4 text-[#F5F5F5] text-center">
+            Join Our Newsletter
+          </h5>
+          <p className="text-[#F5F5F5] text-sm font-sans text-center mb-4">
+            Stay up to date with the new collections, products, and exclusive
+            offers.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center mt-1 space-y-1 sm:space-y-0 sm:space-x-4">
-            <p className="text-sm text-whitesmoke">
+          <form className="flex flex-col sm:flex-row items-center justify-center gap-2 max-w-md mx-auto">
+            <input
+              type="email"
+              placeholder="Your email"
+              className="w-full p-2 border border-[#F5F5F5] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F5F5F5] bg-white text-gray-700 text-sm font-sans"
+            />
+            <button
+              type="submit"
+              className="w-full sm:w-auto px-4 py-2 bg-[#F5F5F5] text-[#4A5D23] rounded-lg hover:bg-[#E0E0E0] transition-colors duration-300 text-sm font-sans"
+            >
+              Subscribe
+            </button>
+          </form>
+          {/* Blogs */}
+          <div className="mt-6">
+            <h5 className="text-base font-serif font-semibold mb-4 text-[#F5F5F5] text-center">
+              Blogs
+            </h5>
+            <ul className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 text-center">
+              {[
+                {
+                  name: "The Ultimate Guide to Choosing...",
+                  url: "/blog/ultimate-guide",
+                },
+                {
+                  name: "Drill Bit Symphony: The Ultimate...",
+                  url: "/blog/drill-bit-symphony",
+                },
+                {
+                  name: "Nail It, Lash It, Own...",
+                  url: "/blog/nail-it-lash-it",
+                },
+              ].map((blog) => (
+                <li key={blog.url}>
+                  <Link
+                    to={blog.url}
+                    className="text-[#F5F5F5] text-sm font-sans hover:text-[#E0E0E0] transition-colors duration-300"
+                  >
+                    {blog.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="mt-8 pt-4 border-t border-[#F5F5F5]/30 text-center">
+          <p className="text-[#F5F5F5] text-sm font-sans">
+            &copy; 2025 <span className="font-semibold">S-TONE Cosmetics</span>.
+            All rights reserved.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center mt-2 space-y-1 sm:space-y-0 sm:space-x-4">
+            <p className="text-sm text-[#F5F5F5] font-sans">
               Powered by{" "}
               <a
                 href="http://wa.me/233559370174"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-whitesmoke hover:underline"
+                className="text-[#F5F5F5] hover:underline"
               >
                 Acement
               </a>

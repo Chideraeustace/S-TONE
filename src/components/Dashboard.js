@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { db, storage } from "../Firebase";
+import { useNavigate } from "react-router-dom";
+import { db, storage, auth } from "../Firebase";
 import {
   collection,
   getDocs,
@@ -7,6 +8,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
 } from "firebase/firestore";
 import {
   ref,
@@ -29,19 +31,20 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const navigate = useNavigate();
 
-  // 💥 MAJOR UPDATE 1: Product State Structure
+  // Product state structure
   const [newProduct, setNewProduct] = useState({
     title: "",
     description: "",
-    // Changed from singular imageFile/imagePreview to an array of images
-    images: [], // Array of { file: File, preview: URL, imageUrl: string (for existing) }
+    images: [],
     categoryId: "",
     subcategoryId: "",
     price: "",
     quantity: "",
     colors: "",
-    thickness: "", // Add optional fields to state
+    thickness: "",
     length: "",
     size: "",
     style: "",
@@ -56,14 +59,70 @@ const Dashboard = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [activeTab, setActiveTab] = useState("products");
 
-  // Determine which state object to use for updates
   const setProductState = editingProduct ? setEditingProduct : setNewProduct;
   const currentProduct = editingProduct || newProduct;
 
-  // 💥 UPDATE 2: Cleanup temporary URLs in useEffect
+  // Check admin status by email
+  useEffect(() => {
+    console.log(
+      "[DEBUG] Dashboard: Checking auth.currentUser:",
+      auth.currentUser
+    );
+    const checkAdminStatus = async () => {
+      if (!auth.currentUser) {
+        console.log(
+          "[DEBUG] Dashboard: No authenticated user, redirecting to /login"
+        );
+        setError("Please log in to access the dashboard.");
+        setLoading(false);
+        navigate("/login");
+        return;
+      }
+
+      try {
+        const userEmail = auth.currentUser.email;
+        console.log("[DEBUG] Dashboard: Checking admin email:", userEmail);
+
+        // Check Firestore s-tone-admins collection
+        const adminDoc = await getDoc(doc(db, "s-tone-admin", userEmail));
+        if (adminDoc.exists()) {
+          console.log("[DEBUG] Dashboard: User is admin (Firestore check)");
+          setIsAdmin(true);
+        } else {
+          console.log("[DEBUG] Dashboard: User is not admin, redirecting to /");
+          setError("Access denied: Admin privileges required.");
+          setLoading(false);
+          navigate("/");
+          return;
+        }
+
+        // Option: Hardcoded admin emails (uncomment to use instead)
+        /*
+        const adminEmails = ["admin1@example.com", "admin2@example.com"];
+        if (adminEmails.includes(userEmail)) {
+          console.log("[DEBUG] Dashboard: User is admin (hardcoded check)");
+          setIsAdmin(true);
+        } else {
+          console.log("[DEBUG] Dashboard: User is not admin, redirecting to /");
+          setError("Access denied: Admin privileges required.");
+          setLoading(false);
+          navigate("/");
+          return;
+        }
+        */
+      } catch (err) {
+        console.error("[DEBUG] Dashboard: Error checking admin status:", err);
+        setError("Failed to verify admin status. Please try again.");
+        setLoading(false);
+        navigate("/");
+      }
+    };
+    checkAdminStatus();
+  }, [navigate]);
+
+  // Cleanup temporary URLs
   useEffect(() => {
     return () => {
-      // Clean up ALL temporary image URLs when component unmounts
       const allImages = [
         ...newProduct.images,
         ...(editingProduct?.images || []),
@@ -74,11 +133,15 @@ const Dashboard = () => {
         }
       });
     };
-  }, [newProduct.images, editingProduct?.images]); // Depend on the image arrays
+  }, [newProduct.images, editingProduct?.images]);
 
+  // Fetch data (products, categories, orders)
   useEffect(() => {
+    if (!isAdmin) return;
+
     const fetchData = async () => {
       try {
+        console.log("[DEBUG] Dashboard: Fetching data");
         const categorySnapshot = await getDocs(
           collection(db, "s-tone-categories")
         );
@@ -92,11 +155,10 @@ const Dashboard = () => {
         const productSnapshot = await getDocs(
           collection(db, "s-tone-products")
         );
-        // Ensure products loaded from Firestore have an 'images' array (even if empty)
         const productList = productSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-          images: doc.data().images || [], // Ensure it's an array for consistency
+          images: doc.data().images || [],
         }));
         setProducts(productList);
 
@@ -107,54 +169,49 @@ const Dashboard = () => {
         }));
         setOrders(orderList);
 
+        console.log("[DEBUG] Dashboard: Data fetched successfully", {
+          categories: categoryList.length,
+          products: productList.length,
+          orders: orderList.length,
+        });
         setLoading(false);
       } catch (err) {
+        console.error("[DEBUG] Dashboard: Error fetching data:", err);
         setError("Failed to fetch data: " + err.message);
-        console.error(err);
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [isAdmin]);
 
-  // 💥 UPDATE 3: handleProductInputChange (Handles both normal fields AND new image array)
+  // Handle product input change
   const handleProductInputChange = (e) => {
     const { name, value } = e.target;
     const files = e.target.files;
 
-    // 1. Handle Multiple Image Files (from custom handler in ProductForm)
     if (name === "imageFiles" && Array.isArray(value)) {
-      // 'value' is an array of { file: File, preview: URL } objects passed from the form
-      // Basic file validation could go here, but it's easier to do it per file upon selection in ProductForm
       setProductState((prev) => ({
         ...prev,
-        images: [...prev.images, ...value], // Append new images to the array
+        images: [...prev.images, ...value],
       }));
       return;
     }
 
-    // Original imageFile logic is no longer needed but kept for other checks
     if (name === "imageFile" && files) {
-      // This block is only if you want to fall back to singular image upload or for validation before the custom handler
-      // Since we're using a custom handler in ProductForm, this block can typically be removed or simplified.
-      // If the custom handler calls this function, the logic below is obsolete.
-      // The previous logic for a single file is now irrelevant for multi-upload.
-      return;
+      return; // Deprecated, kept for compatibility
     }
 
-    // 2. Handle All Other Non-File Inputs
     let formattedValue = value;
     if (name === "price" || name === "quantity") {
       formattedValue = value === "" ? "" : parseFloat(value) >= 0 ? value : "";
     }
 
-    // 3. Handle Category Change (Reset Subcategory if Main Category changes)
     if (name === "categoryId") {
       setProductState((prev) => ({
         ...prev,
         [name]: formattedValue,
-        subcategoryId: "", // Reset subcategory when main category changes
+        subcategoryId: "",
       }));
       return;
     }
@@ -165,21 +222,16 @@ const Dashboard = () => {
     }));
   };
 
-  // 💥 UPDATE 4: handleRemoveImage (Removes image by index and revokes URL)
+  // Handle remove image
   const handleRemoveImage = (indexToRemove) => {
     setProductState((prev) => {
       const imageToRemove = prev.images[indexToRemove];
-
-      // Revoke the temporary URL to free up memory
       if (imageToRemove?.preview) {
         URL.revokeObjectURL(imageToRemove.preview);
       }
-
-      // Filter out the image at the specified index
       const updatedImages = prev.images.filter(
         (_, index) => index !== indexToRemove
       );
-
       return {
         ...prev,
         images: updatedImages,
@@ -187,31 +239,7 @@ const Dashboard = () => {
     });
   };
 
-  const handleCategoryInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const formattedValue = type === "checkbox" ? checked : value;
-    if (editingCategory) {
-      setEditingCategory({
-        ...editingCategory,
-        [name]: formattedValue,
-        url:
-          name === "name"
-            ? `/${value.toLowerCase().replace(/\s+/g, "-")}`
-            : editingCategory.url,
-      });
-    } else {
-      setNewCategory({
-        ...newCategory,
-        [name]: formattedValue,
-        url:
-          name === "name"
-            ? `/${value.toLowerCase().replace(/\s+/g, "-")}`
-            : newCategory.url,
-      });
-    }
-  };
-
-  // 💥 UPDATE 5: handleProductSubmit (Handles multiple file uploads)
+  // Handle product submit
   const handleProductSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -220,7 +248,6 @@ const Dashboard = () => {
     const product = editingProduct || newProduct;
     const isEditing = !!editingProduct;
 
-    // Basic Required Field Validation
     if (
       !product.title ||
       !product.description ||
@@ -234,7 +261,6 @@ const Dashboard = () => {
       return;
     }
 
-    // Multi-Image Validation
     if (!product.images || product.images.length === 0) {
       setError("Please select at least one image file.");
       setTimeout(() => setError(null), 3000);
@@ -269,21 +295,18 @@ const Dashboard = () => {
               .map((c) => c.trim())
               .filter((c) => c)
           : [],
-        thickness: product.thickness || null, // Include optional fields
+        thickness: product.thickness || null,
         length: product.length || null,
         size: product.size || null,
         style: product.style || null,
-        // The array to hold the FINAL public image URLs
         images: [],
         createdAt: new Date(),
       };
 
       const uploadPromises = product.images.map(async (imageObject) => {
-        // Only upload file objects (newly added files or files being replaced)
         if (imageObject.file) {
           const file = imageObject.file;
           const fileExtension = file.name.split(".").pop();
-          // Generate a unique file name for each image, using the product ID if editing
           const uniqueFileName = `${
             isEditing ? product.id : Date.now()
           }_${Date.now()}_${Math.random()
@@ -299,36 +322,26 @@ const Dashboard = () => {
           const downloadURL = await getDownloadURL(storageRef);
           return {
             url: downloadURL,
-            path: storageRef.fullPath, // Store path for easier deletion later
+            path: storageRef.fullPath,
           };
         }
-        // Keep existing image URLs if no new file was uploaded for this slot
         return {
           url: imageObject.url,
           path: imageObject.path,
         };
       });
 
-      // Resolve all upload promises
       const newImageUrls = (await Promise.all(uploadPromises)).filter(
         (img) => img.url
       );
-
-      // Handle old image deletion (complex for multi-upload, generally done by tracking diffs)
-      // For simplicity here, we will *only* delete old images if a product is being edited
-      // and we are replacing the entire image set, which is not the case here.
-      // We assume images are only added/removed, and the old image URLs in the DB are handled below.
-
       productData.images = newImageUrls;
 
-      // 🚨 Deleting Old Images (Simplified Logic for multi-upload)
       if (isEditing) {
         const oldImages =
           products.find((p) => p.id === product.id)?.images || [];
         const currentUrls = newImageUrls.map((img) => img.url);
-
         const imagesToDelete = oldImages.filter(
-          (oldImg) => !currentUrls.includes(oldImg.url) && oldImg.path // Find images in DB that aren't in the new list
+          (oldImg) => !currentUrls.includes(oldImg.url) && oldImg.path
         );
 
         await Promise.all(
@@ -337,14 +350,11 @@ const Dashboard = () => {
               const imageRef = ref(storage, img.path);
               await deleteObject(imageRef);
             } catch (err) {
-              // Suppress error if file doesn't exist (e.g., if path was just the URL)
               console.warn("Failed to delete old image:", err);
             }
           })
         );
-      }
 
-      if (isEditing) {
         const productRef = doc(db, "s-tone-products", editingProduct.id);
         await updateDoc(productRef, productData);
         setProducts(
@@ -363,15 +373,26 @@ const Dashboard = () => {
         setSuccess("Product added successfully!");
       }
 
-      // Cleanup local preview URLs for the submitted product
       product.images.forEach((image) => {
         if (image.preview) {
           URL.revokeObjectURL(image.preview);
         }
       });
 
-      // Reset new product form state
-      setNewProduct(initialNewProductState); // Use a cleaner initial state definition
+      setNewProduct({
+        title: "",
+        description: "",
+        images: [],
+        categoryId: "",
+        subcategoryId: "",
+        price: "",
+        quantity: "",
+        colors: "",
+        thickness: "",
+        length: "",
+        size: "",
+        style: "",
+      });
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(
@@ -386,34 +407,15 @@ const Dashboard = () => {
     }
   };
 
-  // Define a cleaner initial state object for reset
-  const initialNewProductState = {
-    title: "",
-    description: "",
-    images: [],
-    categoryId: "",
-    subcategoryId: "",
-    price: "",
-    quantity: "",
-    colors: "",
-    thickness: "",
-    length: "",
-    size: "",
-    style: "",
-  };
-
-  // 💥 UPDATE 6: handleProductDelete (Handles deleting all associated images)
+  // Handle product delete
   const handleProductDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
         const product = products.find((p) => p.id === id);
-
-        // Delete all associated images
         if (product.images && product.images.length > 0) {
           await Promise.all(
             product.images.map(async (image) => {
               if (image.path) {
-                // Only attempt to delete if a storage path exists
                 try {
                   const imageRef = ref(storage, image.path);
                   await deleteObject(imageRef);
@@ -440,14 +442,13 @@ const Dashboard = () => {
     }
   };
 
-  // 💥 UPDATE 7: handleProductEdit (Formats existing product data for the form)
+  // Handle product edit
   const handleProductEdit = (product) => {
-    // Transform the Firestore images array for the form
     const imagesForForm = (product.images || []).map((img) => ({
-      url: img.url, // The permanent download URL
-      path: img.path, // The permanent storage path
-      preview: img.url, // Use the permanent URL for preview
-      file: null, // No new file yet
+      url: img.url,
+      path: img.path,
+      preview: img.url,
+      file: null,
     }));
 
     setEditingProduct({
@@ -455,24 +456,67 @@ const Dashboard = () => {
       price: product.price || "",
       quantity: product.quantity || "",
       colors: product.colors ? product.colors.join(", ") : "",
-      images: imagesForForm, // Set the formatted image array
-      // Include optional fields for editing
       thickness: product.thickness || "",
       length: product.length || "",
       size: product.size || "",
       style: product.style || "",
+      images: imagesForForm,
     });
   };
 
-  // ... (Category handlers remain the same)
+  // Handle category input change
+  const handleCategoryInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    console.log("[DEBUG] Dashboard: Category input change", {
+      name,
+      value,
+      type,
+      checked,
+    });
+
+    const formattedValue = type === "checkbox" ? checked : value;
+
+    if (editingCategory) {
+      setEditingCategory({
+        ...editingCategory,
+        [name]: formattedValue,
+        url:
+          name === "name"
+            ? `/${value.toLowerCase().replace(/\s+/g, "-")}`
+            : editingCategory.url,
+        ...(name === "isSubcategory" && !checked
+          ? { parentCategoryId: "" }
+          : {}),
+      });
+    } else {
+      setNewCategory({
+        ...newCategory,
+        [name]: formattedValue,
+        url:
+          name === "name"
+            ? `/${value.toLowerCase().replace(/\s+/g, "-")}`
+            : newCategory.url,
+        ...(name === "isSubcategory" && !checked
+          ? { parentCategoryId: "" }
+          : {}),
+      });
+    }
+  };
+
+  // Handle category submit
   const handleCategorySubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
     try {
-      const categoryUrl = `/${currentProduct.name
+      const categoryUrl = `/${newCategory.name
         .toLowerCase()
         .replace(/\s+/g, "-")}`;
+      console.log("[DEBUG] Dashboard: Submitting category", {
+        name: newCategory.name,
+        url: categoryUrl,
+      });
+
       const existingCategory = categories
         .concat(subcategories)
         .find(
@@ -482,6 +526,9 @@ const Dashboard = () => {
         );
       if (existingCategory) {
         setError("Category URL must be unique.");
+        console.log("[DEBUG] Dashboard: Category URL conflict", {
+          url: categoryUrl,
+        });
         setTimeout(() => setError(null), 3000);
         return;
       }
@@ -492,7 +539,9 @@ const Dashboard = () => {
           name: editingCategory.name,
           url: editingCategory.url,
           isSubcategory: editingCategory.isSubcategory,
-          parentCategoryId: editingCategory.parentCategoryId,
+          parentCategoryId: editingCategory.isSubcategory
+            ? editingCategory.parentCategoryId
+            : "",
         });
         if (editingCategory.isSubcategory) {
           setSubcategories(
@@ -509,6 +558,9 @@ const Dashboard = () => {
         }
         setEditingCategory(null);
         setSuccess("Category updated successfully!");
+        console.log("[DEBUG] Dashboard: Category updated", {
+          id: editingCategory.id,
+        });
       } else {
         const docRef = await addDoc(collection(db, "s-tone-categories"), {
           name: newCategory.name,
@@ -533,16 +585,18 @@ const Dashboard = () => {
           setCategories([...categories, newCategoryData]);
         }
         setSuccess("Category added successfully!");
+        console.log("[DEBUG] Dashboard: Category added", { id: docRef.id });
       }
       setNewCategory({ name: "", isSubcategory: false, parentCategoryId: "" });
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError("Failed to save category: " + err.message);
-      console.error(err);
+      console.error("[DEBUG] Dashboard: Error saving category:", err);
       setTimeout(() => setError(null), 3000);
     }
   };
 
+  // Handle category delete
   const handleCategoryDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this category?")) {
       try {
@@ -553,6 +607,10 @@ const Dashboard = () => {
         if (productsUsingCategory.length > 0) {
           setError(
             "Cannot delete category: It is used by one or more products."
+          );
+          console.log(
+            "[DEBUG] Dashboard: Cannot delete category, used by products",
+            { id }
           );
           setTimeout(() => setError(null), 3000);
           return;
@@ -565,6 +623,10 @@ const Dashboard = () => {
             setError(
               "Cannot delete main category: It has associated subcategories."
             );
+            console.log(
+              "[DEBUG] Dashboard: Cannot delete category, has subcategories",
+              { id }
+            );
             setTimeout(() => setError(null), 3000);
             return;
           }
@@ -576,15 +638,17 @@ const Dashboard = () => {
           setCategories(categories.filter((c) => c.id !== id));
         }
         setSuccess("Category deleted successfully!");
+        console.log("[DEBUG] Dashboard: Category deleted", { id });
         setTimeout(() => setSuccess(null), 3000);
       } catch (err) {
         setError("Failed to delete category: " + err.message);
-        console.error(err);
+        console.error("[DEBUG] Dashboard: Error deleting category:", err);
         setTimeout(() => setError(null), 3000);
       }
     }
   };
 
+  // Handle category edit
   const handleCategoryEdit = (category) => {
     setEditingCategory(category);
     setNewCategory({
@@ -592,9 +656,10 @@ const Dashboard = () => {
       isSubcategory: category.isSubcategory,
       parentCategoryId: category.parentCategoryId || "",
     });
+    console.log("[DEBUG] Dashboard: Editing category", { id: category.id });
   };
 
-  // ... (Utility functions remain the same)
+  // Utility functions
   const getCategoryDetails = (categoryId, subcategoryId) => {
     const category = categories.find((cat) => cat.id === categoryId) || {
       name: "Unknown",
@@ -623,24 +688,37 @@ const Dashboard = () => {
     });
   };
 
-  const getPaymentType = (order) => {
-    return order.chargeId && order.hostedUrl ? "Crypto" : "Regular";
-  };
-  // ... (Loader and JSX rendering remain the same)
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-whitesmoke flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#F5F5F5] to-cream-100 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-[#4A5D23]"></div>
       </div>
     );
   }
 
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#F5F5F5] to-cream-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-sm font-sans mb-4">
+            {error || "Access denied: Admin privileges required."}
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="px-4 py-2 bg-[#4A5D23] text-white rounded-lg hover:bg-[#3A4A1C] transition-colors font-sans text-sm"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-whitesmoke p-4 sm:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-[#F5F5F5] to-cream-100 p-4 sm:p-8">
       <div className="container mx-auto max-w-7xl">
         <h1
-          className="text-4xl font-bold text-[#4A5D23] mb-8 text-center"
+          className="text-3xl sm:text-4xl font-serif font-bold text-gray-800 mb-8 text-center"
           data-aos="fade-up"
         >
           Admin Dashboard
@@ -656,7 +734,7 @@ const Dashboard = () => {
           >
             <button
               onClick={() => setActiveTab("products")}
-              className={`px-4 py-2 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A5D23] ${
+              className={`px-4 py-2 font-sans text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A5D23] ${
                 activeTab === "products"
                   ? "bg-[#4A5D23] text-white"
                   : "bg-gray-200 text-[#4A5D23] hover:bg-gray-300"
@@ -669,7 +747,7 @@ const Dashboard = () => {
             </button>
             <button
               onClick={() => setActiveTab("categories")}
-              className={`px-4 py-2 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A5D23] ${
+              className={`px-4 py-2 font-sans text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A5D23] ${
                 activeTab === "categories"
                   ? "bg-[#4A5D23] text-white"
                   : "bg-gray-200 text-[#4A5D23] hover:bg-gray-300"
@@ -682,7 +760,7 @@ const Dashboard = () => {
             </button>
             <button
               onClick={() => setActiveTab("orders")}
-              className={`px-4 py-2 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A5D23] ${
+              className={`px-4 py-2 font-sans text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A5D23] ${
                 activeTab === "orders"
                   ? "bg-[#4A5D23] text-white"
                   : "bg-gray-200 text-[#4A5D23] hover:bg-gray-300"
@@ -755,11 +833,7 @@ const Dashboard = () => {
               activeTab === "orders" ? "block" : "hidden sm:block"
             }`}
           >
-            <OrderList
-              orders={orders}
-              getPaymentType={getPaymentType}
-              formatDate={formatDate}
-            />
+            <OrderList orders={orders} formatDate={formatDate} />
           </div>
         </div>
       </div>

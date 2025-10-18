@@ -1,40 +1,51 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
-// Create Cart Context
 const CartContext = createContext();
 
-// Cart Provider Component
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState(() => {
-    // Load cart from localStorage on initialization
     const savedCart = localStorage.getItem("cart");
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
-  // Save cart to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  const handleAddToCart = (product, selectedQuantity) => {
+  const handleAddToCart = (product, selectedQuantity, selectedAttributes) => {
     if (product?.quantity === 0 || selectedQuantity < 1) {
       return;
     }
-    // Assume product.price is in USD; if Firestore prices are in GHS, convert:
-    // const exchangeRate = 0.064; // 1 GHS = 0.064 USD
-    // const usdPrice = product.price * exchangeRate;
     const cartItem = {
       id: product.id,
       title: product.title,
       quantity: selectedQuantity,
-      price: product.price, // Price in USD
-      imageUrl: product.imageUrl,
+      price: product.price, // Price in GHS
+      images: product.images,
+      selectedColor: selectedAttributes?.selectedColor || "N/A",
+      selectedLength: selectedAttributes?.selectedLength || "N/A",
+      selectedSize: selectedAttributes?.selectedSize || "N/A",
+      selectedStyle: selectedAttributes?.selectedStyle || "N/A",
+      selectedThickness: selectedAttributes?.selectedThickness || "N/A",
     };
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
+      const existingItem = prevCart.find(
+        (item) =>
+          item.id === product.id &&
+          item.selectedColor === cartItem.selectedColor &&
+          item.selectedLength === cartItem.selectedLength &&
+          item.selectedSize === cartItem.selectedSize &&
+          item.selectedStyle === cartItem.selectedStyle &&
+          item.selectedThickness === cartItem.selectedThickness
+      );
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === product.id
+          item.id === product.id &&
+          item.selectedColor === cartItem.selectedColor &&
+          item.selectedLength === cartItem.selectedLength &&
+          item.selectedSize === cartItem.selectedSize &&
+          item.selectedStyle === cartItem.selectedStyle &&
+          item.selectedThickness === cartItem.selectedThickness
             ? { ...item, quantity: item.quantity + selectedQuantity }
             : item
         );
@@ -44,7 +55,10 @@ export const CartProvider = ({ children }) => {
     console.log(
       `Added to cart: ${
         product.title
-      }, Quantity: ${selectedQuantity}, Price: $${product.price.toFixed(2)}`
+      }, Quantity: ${selectedQuantity}, Price: ₵${product.price.toFixed(
+        2
+      )}, Attributes:`,
+      selectedAttributes
     );
   };
 
@@ -79,5 +93,4 @@ export const CartProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use the Cart Context
 export const useCart = () => useContext(CartContext);

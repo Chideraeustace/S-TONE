@@ -385,7 +385,7 @@ export const ProductForm = ({
             htmlFor="price"
             className="block text-sm font-medium text-[#4A5D23] mb-1"
           >
-            Price (USD)
+            Price (GHC)
           </label>
           <input
             type="number"
@@ -393,12 +393,12 @@ export const ProductForm = ({
             name="price"
             value={currentProduct.price}
             onChange={handleProductInputChange}
-            placeholder="Enter price in USD (e.g., 29.99)"
+            placeholder="Enter price in GHC (e.g., 100)"
             step="0.01"
             min="0"
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4A5D23] focus:border-[#4A5D23] transition-colors"
             required
-            aria-label="Product Price in USD"
+            aria-label="Product Price in GHC"
           />
         </div>
         <div>

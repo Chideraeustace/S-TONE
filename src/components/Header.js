@@ -15,6 +15,8 @@ import {
   BiChevronDown,
 } from "react-icons/bi";
 import { useCart } from "./CartContext";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../Firebase"; // Adjust the path to your Firebase config
 import logo from "../assets/s-tonelogo.avif";
 
 const Header = () => {
@@ -22,47 +24,89 @@ const Header = () => {
   const [accountOpen, setAccountOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [lashesMenuOpen, setLashesMenuOpen] = useState(false);
-  const [nailsMenuOpen, setNailsMenuOpen] = useState(false);
-  const [semiPermanentMenuOpen, setSemiPermanentMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState({});
+  const [categories, setCategories] = useState([]);
   const { cart } = useCart();
   const cartCount = cart.length;
 
-  const lashesMenuRef = useRef(null);
-  const nailsMenuRef = useRef(null);
-  const semiPermanentMenuRef = useRef(null);
+  const menuRefs = useRef({});
   const currencyMenuRef = useRef(null);
   const accountMenuRef = useRef(null);
+
+  // Fetch categories from Firestore
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const querySnapshot = await getDocs(
+          collection(db, "s-tone-categories")
+        );
+        const categoriesData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        // Filter top-level categories and associate subcategories
+        const topLevelCategories = categoriesData
+          .filter((cat) => !cat.isSubcategory)
+          .map((category) => ({
+            ...category,
+            subcategories: categoriesData.filter(
+              (subcat) =>
+                subcat.isSubcategory && subcat.parentCategoryId === category.id
+            ),
+          }));
+
+        setCategories(topLevelCategories);
+        // Initialize menuOpen state for each top-level category
+        setMenuOpen(
+          topLevelCategories.reduce(
+            (acc, category) => ({
+              ...acc,
+              [category.id]: false,
+            }),
+            {}
+          )
+        );
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Close mobile nav on link click
   const handleNavLinkClick = () => {
     setMobileNavOpen(false);
-    setLashesMenuOpen(false);
-    setNailsMenuOpen(false);
-    setSemiPermanentMenuOpen(false);
+    setMenuOpen(
+      Object.keys(menuOpen).reduce(
+        (acc, key) => ({
+          ...acc,
+          [key]: false,
+        }),
+        {}
+      )
+    );
+  };
+
+  // Toggle dropdown menu for a specific category
+  const toggleMenu = (categoryId) => {
+    setMenuOpen((prev) => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }));
   };
 
   // Click outside handler to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        lashesMenuRef.current &&
-        !lashesMenuRef.current.contains(event.target)
-      ) {
-        setLashesMenuOpen(false);
-      }
-      if (
-        nailsMenuRef.current &&
-        !nailsMenuRef.current.contains(event.target)
-      ) {
-        setNailsMenuOpen(false);
-      }
-      if (
-        semiPermanentMenuRef.current &&
-        !semiPermanentMenuRef.current.contains(event.target)
-      ) {
-        setSemiPermanentMenuOpen(false);
-      }
+      Object.keys(menuRefs.current).forEach((key) => {
+        if (
+          menuRefs.current[key] &&
+          !menuRefs.current[key].contains(event.target)
+        ) {
+          setMenuOpen((prev) => ({ ...prev, [key]: false }));
+        }
+      });
       if (
         currencyMenuRef.current &&
         !currencyMenuRef.current.contains(event.target)
@@ -90,9 +134,7 @@ const Header = () => {
           <div className="flex items-center justify-between">
             <div className="hidden lg:flex items-center">
               <BiPhone className="mr-2 text-lg text-gray-600" />
-              <span className="text-sm text-white">
-                Need help? Call us:{" "}
-              </span>
+              <span className="text-sm text-white">Need help? Call us: </span>
               <a
                 href="tel:+8613527956171"
                 className="ml-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
@@ -134,8 +176,8 @@ const Header = () => {
                   }`}
                 >
                   <li>
-                    <button className="flex items-center px-4 py-3 hover:bg-gray-50 w-full text-left text-base text-white">
-                      <BiCheck className="mr-2 text-lg text-white" />
+                    <button className="flex items-center px-4 py-3 hover:bg-gray-50 w-full text-left text-base text-gray-700">
+                      <BiCheck className="mr-2 text-lg text-gray-700" />
                       USD
                     </button>
                   </li>
@@ -277,767 +319,60 @@ const Header = () => {
                   Home
                 </NavLink>
               </li>
-              <li className="relative" ref={lashesMenuRef}>
-                <button
-                  onClick={() => setLashesMenuOpen(!lashesMenuOpen)}
-                  className="flex items-center text-gray-700 hover:text-blue-600 text-base transition-colors"
+              {categories.map((category) => (
+                <li
+                  key={category.id}
+                  className="relative"
+                  ref={(el) => (menuRefs.current[category.id] = el)}
                 >
-                  Lashes <BiChevronDown className="ml-1 text-lg" />
-                </button>
-                <div
-                  className={`mobile-megamenu block xl:hidden max-h-96 overflow-y-auto bg-white shadow-lg rounded-lg mt-2 ${
-                    lashesMenuOpen ? "block" : "hidden"
-                  }`}
-                >
-                  <ul className="flex flex-col">
-                    <li>
-                      <Link
-                        to="/category/lashes/strip-lashes"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Strip Lashes
-                      </Link>
-                      <ul className="pl-4">
-                        <li>
+                  <button
+                    onClick={() => toggleMenu(category.id)}
+                    className="flex items-center text-gray-700 hover:text-blue-600 text-base transition-colors"
+                  >
+                    {category.name} <BiChevronDown className="ml-1 text-lg" />
+                  </button>
+                  <div
+                    className={`mobile-megamenu block xl:hidden max-h-96 overflow-y-auto bg-white shadow-lg rounded-lg mt-2 ${
+                      menuOpen[category.id] ? "block" : "hidden"
+                    }`}
+                  >
+                    <ul className="flex flex-col">
+                      {category.subcategories.map((subcategory) => (
+                        <li key={subcategory.id}>
                           <Link
-                            to="/category/lashes/strip-lashes/natural"
+                            to={subcategory.url}
                             onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                            className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
                           >
-                            Natural
+                            {subcategory.name}
                           </Link>
                         </li>
-                        <li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div
+                    className={`desktop-megamenu hidden xl:block absolute left-0 bg-white shadow-lg rounded-lg mt-2 w-[600px] p-4 z-50 transition-all duration-200 ${
+                      menuOpen[category.id]
+                        ? "block opacity-100"
+                        : "hidden opacity-0"
+                    }`}
+                  >
+                    <ul className="grid grid-cols-3 gap-4">
+                      {category.subcategories.map((subcategory) => (
+                        <li key={subcategory.id}>
                           <Link
-                            to="/category/lashes/strip-lashes/dramatic"
+                            to={subcategory.url}
                             onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                            className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
                           >
-                            Dramatic
+                            {subcategory.name}
                           </Link>
                         </li>
-                        <li>
-                          <Link
-                            to="/category/lashes/strip-lashes/volume"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Volume
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category/lashes/individual-lashes"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Individual Lashes
-                      </Link>
-                      <ul className="pl-4">
-                        <li>
-                          <Link
-                            to="/category/lashes/individual-lashes/clusters"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Clusters
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/lashes/individual-lashes/single-flares"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Single Flares
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/lashes/individual-lashes/extensions"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Extensions
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category/lashes/lash-tools"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Lash Tools
-                      </Link>
-                      <ul className="pl-4">
-                        <li>
-                          <Link
-                            to="/category/lashes/lash-tools/adhesives"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Adhesives
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/lashes/lash-tools/applicators"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Applicators
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/lashes/lash-tools/removers"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Removers
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-                <div
-                  className={`desktop-megamenu hidden xl:block absolute left-0 bg-white shadow-lg rounded-lg mt-2 w-[600px] p-4 z-50 transition-all duration-200 ${
-                    lashesMenuOpen ? "block opacity-100" : "hidden opacity-0"
-                  }`}
-                >
-                  <ul className="grid grid-cols-3 gap-4">
-                    <li>
-                      <Link
-                        to="/category/lashes/strip-lashes"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Strip Lashes
-                      </Link>
-                      <ul>
-                        <li>
-                          <Link
-                            to="/category/lashes/strip-lashes/natural"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Natural
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/lashes/strip-lashes/dramatic"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Dramatic
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/lashes/strip-lashes/volume"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Volume
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category/lashes/individual-lashes"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Individual Lashes
-                      </Link>
-                      <ul>
-                        <li>
-                          <Link
-                            to="/category/lashes/individual-lashes/clusters"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Clusters
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/lashes/individual-lashes/single-flares"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Single Flares
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/lashes/individual-lashes/extensions"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Extensions
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category/lashes/lash-tools"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Lash Tools
-                      </Link>
-                      <ul>
-                        <li>
-                          <Link
-                            to="/category/lashes/lash-tools/adhesives"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Adhesives
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/lashes/lash-tools/applicators"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Applicators
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/lashes/lash-tools/removers"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Removers
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-              </li>
-              <li className="relative" ref={nailsMenuRef}>
-                <button
-                  onClick={() => setNailsMenuOpen(!nailsMenuOpen)}
-                  className="flex items-center text-gray-700 hover:text-blue-600 text-base transition-colors"
-                >
-                  Nails <BiChevronDown className="ml-1 text-lg" />
-                </button>
-                <div
-                  className={`mobile-megamenu block xl:hidden max-h-96 overflow-y-auto bg-white shadow-lg rounded-lg mt-2 ${
-                    nailsMenuOpen ? "block" : "hidden"
-                  }`}
-                >
-                  <ul className="flex flex-col">
-                    <li>
-                      <Link
-                        to="/category/nails/polish"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Nail Polish
-                      </Link>
-                      <ul className="pl-4">
-                        <li>
-                          <Link
-                            to="/category/nails/polish/gel"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Gel Polish
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/nails/polish/regular"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Regular Polish
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/nails/polish/glitter"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Glitter Polish
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category/nails/press-ons"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Press-On Nails
-                      </Link>
-                      <ul className="pl-4">
-                        <li>
-                          <Link
-                            to="/category/nails/press-ons/short"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Short
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/nails/press-ons/medium"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Medium
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/nails/press-ons/long"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Long
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category/nails/nail-tools"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Nail Tools
-                      </Link>
-                      <ul className="pl-4">
-                        <li>
-                          <Link
-                            to="/category/nails/nail-tools/files"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Files
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/nails/nail-tools/clippers"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Clippers
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/nails/nail-tools/brushes"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Brushes
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-                <div
-                  className={`desktop-megamenu hidden xl:block absolute left-0 bg-white shadow-lg rounded-lg mt-2 w-[600px] p-4 z-50 transition-all duration-200 ${
-                    nailsMenuOpen ? "block opacity-100" : "hidden opacity-0"
-                  }`}
-                >
-                  <ul className="grid grid-cols-3 gap-4">
-                    <li>
-                      <Link
-                        to="/category/nails/polish"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Nail Polish
-                      </Link>
-                      <ul>
-                        <li>
-                          <Link
-                            to="/category/nails/polish/gel"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Gel Polish
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/nails/polish/regular"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Regular Polish
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/nails/polish/glitter"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Glitter Polish
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category/nails/press-ons"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Press-On Nails
-                      </Link>
-                      <ul>
-                        <li>
-                          <Link
-                            to="/category/nails/press-ons/short"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Short
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/nails/press-ons/medium"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Medium
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/nails/press-ons/long"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Long
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category/nails/nail-tools"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Nail Tools
-                      </Link>
-                      <ul>
-                        <li>
-                          <Link
-                            to="/category/nails/nail-tools/files"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Files
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/nails/nail-tools/clippers"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Clippers
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/nails/nail-tools/brushes"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Brushes
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-              </li>
-              <li className="relative" ref={semiPermanentMenuRef}>
-                <button
-                  onClick={() =>
-                    setSemiPermanentMenuOpen(!semiPermanentMenuOpen)
-                  }
-                  className="flex items-center text-gray-700 hover:text-blue-600 text-base transition-colors"
-                >
-                  Semi-Permanent Makeup{" "}
-                  <BiChevronDown className="ml-1 text-lg" />
-                </button>
-                <div
-                  className={`mobile-megamenu block xl:hidden max-h-96 overflow-y-auto bg-white shadow-lg rounded-lg mt-2 ${
-                    semiPermanentMenuOpen ? "block" : "hidden"
-                  }`}
-                >
-                  <ul className="flex flex-col">
-                    <li>
-                      <Link
-                        to="/category/semi-permanent/eyebrows"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Eyebrows
-                      </Link>
-                      <ul className="pl-4">
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/eyebrows/microblading"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Microblading
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/eyebrows/powder-brows"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Powder Brows
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/eyebrows/ombre-brows"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Ombre Brows
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category/semi-permanent/eyeliners"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Eyeliners
-                      </Link>
-                      <ul className="pl-4">
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/eyeliners/upper-liner"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Upper Liner
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/eyeliners/lower-liner"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Lower Liner
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/eyeliners/winged-liner"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Winged Liner
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category/semi-permanent/lips"
-                        onClick={handleNavLinkClick}
-                        className="block px-4 py-3 hover:bg-gray-50 text-base text-gray-700 hover:text-blue-600 transition-colors"
-                      >
-                        Lips
-                      </Link>
-                      <ul className="pl-4">
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/lips/lip-blush"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Lip Blush
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/lips/full-lip"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Full Lip
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/lips/lip-liner"
-                            onClick={handleNavLinkClick}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Lip Liner
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-                <div
-                  className={`desktop-megamenu hidden xl:block absolute left-0 bg-white shadow-lg rounded-lg mt-2 w-[600px] p-4 z-50 transition-all duration-200 ${
-                    semiPermanentMenuOpen
-                      ? "block opacity-100"
-                      : "hidden opacity-0"
-                  }`}
-                >
-                  <ul className="grid grid-cols-3 gap-4">
-                    <li>
-                      <Link
-                        to="/category/semi-permanent/eyebrows"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Eyebrows
-                      </Link>
-                      <ul>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/eyebrows/microblading"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Microblading
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/eyebrows/powder-brows"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Powder Brows
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/eyebrows/ombre-brows"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Ombre Brows
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category/semi-permanent/eyeliners"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Eyeliners
-                      </Link>
-                      <ul>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/eyeliners/upper-liner"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Upper Liner
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/eyeliners/lower-liner"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Lower Liner
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/eyeliners/winged-liner"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Winged Liner
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                    <li>
-                      <Link
-                        to="/category/semi-permanent/lips"
-                        onClick={handleNavLinkClick}
-                        className="block py-2 text-gray-700 hover:text-blue-600 text-base transition-colors"
-                      >
-                        Lips
-                      </Link>
-                      <ul>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/lips/lip-blush"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Lip Blush
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/lips/full-lip"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Full Lip
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/category/semi-permanent/lips/lip-liner"
-                            onClick={handleNavLinkClick}
-                            className="block py-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                          >
-                            Lip Liner
-                          </Link>
-                        </li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-              </li>
+                      ))}
+                    </ul>
+                  </div>
+                </li>
+              ))}
               <li>
                 <NavLink
                   to="/kits"
