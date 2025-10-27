@@ -8,7 +8,8 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  getDoc,
+  query,
+  where
 } from "firebase/firestore";
 import {
   ref,
@@ -64,15 +65,11 @@ const Dashboard = () => {
 
   // Check admin status by email
   useEffect(() => {
-    console.log(
-      "[DEBUG] Dashboard: Checking auth.currentUser:",
-      auth.currentUser
-    );
     const checkAdminStatus = async () => {
+      console.log("[DEBUG] Dashboard: Checking auth:", auth.currentUser);
+
       if (!auth.currentUser) {
-        console.log(
-          "[DEBUG] Dashboard: No authenticated user, redirecting to /login"
-        );
+        console.log("[DEBUG] No authenticated user → redirect");
         setError("Please log in to access the dashboard.");
         setLoading(false);
         navigate("/login");
@@ -81,44 +78,35 @@ const Dashboard = () => {
 
       try {
         const userEmail = auth.currentUser.email;
-        console.log("[DEBUG] Dashboard: Checking admin email:", userEmail);
+        console.log("[DEBUG] Checking admin email:", userEmail);
 
-        // Check Firestore s-tone-admins collection
-        const adminDoc = await getDoc(doc(db, "s-tone-admin", userEmail));
-        if (adminDoc.exists()) {
-          console.log("[DEBUG] Dashboard: User is admin (Firestore check)");
+        const q = query(
+          collection(db, "s-tone-admin"),
+          where("email", "==", userEmail)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          console.log("[DEBUG] ✅ User is admin");
           setIsAdmin(true);
+          setLoading(false); // ✅ IMPORTANT!
         } else {
-          console.log("[DEBUG] Dashboard: User is not admin, redirecting to /");
+          console.log("[DEBUG] ❌ User is NOT admin → redirect");
           setError("Access denied: Admin privileges required.");
           setLoading(false);
           navigate("/");
-          return;
         }
-
-        // Option: Hardcoded admin emails (uncomment to use instead)
-        /*
-        const adminEmails = ["admin1@example.com", "admin2@example.com"];
-        if (adminEmails.includes(userEmail)) {
-          console.log("[DEBUG] Dashboard: User is admin (hardcoded check)");
-          setIsAdmin(true);
-        } else {
-          console.log("[DEBUG] Dashboard: User is not admin, redirecting to /");
-          setError("Access denied: Admin privileges required.");
-          setLoading(false);
-          navigate("/");
-          return;
-        }
-        */
       } catch (err) {
-        console.error("[DEBUG] Dashboard: Error checking admin status:", err);
+        console.error("[DEBUG] Error checking admin:", err);
         setError("Failed to verify admin status. Please try again.");
         setLoading(false);
         navigate("/");
       }
     };
+
     checkAdminStatus();
-  }, [navigate]);
+  }, [navigate, auth.currentUser]); // ✅ Add dependency
 
   // Cleanup temporary URLs
   useEffect(() => {
