@@ -1,6 +1,6 @@
 import React from "react";
 
-export const OrderList = ({ orders, getPaymentType, formatDate }) => (
+export const OrderList = ({ orders, formatDate }) => (
   <section className="bg-white p-6 rounded-xl shadow-lg" data-aos="fade-up">
     <h2 className="text-2xl font-semibold text-[#4A5D23] mb-6">
       Customer Orders
@@ -19,10 +19,13 @@ export const OrderList = ({ orders, getPaymentType, formatDate }) => (
               Product
             </th>
             <th className="p-4 text-left text-sm font-semibold text-[#4A5D23]">
+              Details
+            </th>
+            <th className="p-4 text-left text-sm font-semibold text-[#4A5D23]">
               Amount (USD)
             </th>
             <th className="p-4 text-left text-sm font-semibold text-[#4A5D23]">
-              Payment Type
+              Shipping Fee
             </th>
             <th className="p-4 text-left text-sm font-semibold text-[#4A5D23]">
               Status
@@ -31,7 +34,7 @@ export const OrderList = ({ orders, getPaymentType, formatDate }) => (
               Order Date
             </th>
             <th className="p-4 text-left text-sm font-semibold text-[#4A5D23]">
-              Details
+              More Info
             </th>
           </tr>
         </thead>
@@ -44,8 +47,27 @@ export const OrderList = ({ orders, getPaymentType, formatDate }) => (
             const cartItems = isCrypto
               ? order.metadata?.cartItems
               : order.cartItems;
+            const firstCartItem =
+              cartItems && cartItems.length > 0 ? cartItems[0] : null;
+
+            // Determine Product Details string
+            let productDetails = [];
+            if (firstCartItem && firstCartItem.style)
+              productDetails.push(firstCartItem.style);
+            if (firstCartItem && firstCartItem.thickness)
+              productDetails.push(firstCartItem.thickness);
+            if (firstCartItem && firstCartItem.length)
+              productDetails.push(firstCartItem.length);
+            if (firstCartItem && firstCartItem.size)
+              productDetails.push(firstCartItem.size);
+            const productDetailsString =
+              productDetails.length > 0 ? productDetails.join(" / ") : "N/A";
+
             return (
-              <tr key={order.id} className="border-b hover:bg-gray-50">
+              <tr
+                key={order.id || order.transactionRef || order.chargeId}
+                className="border-b hover:bg-gray-50"
+              >
                 <td className="p-4 text-[#4A5D23]">
                   {order.chargeId || order.transactionRef || order.id}
                 </td>
@@ -53,16 +75,17 @@ export const OrderList = ({ orders, getPaymentType, formatDate }) => (
                   {customer && customer.name ? customer.name : "N/A"}
                 </td>
                 <td className="p-4 text-[#4A5D23]">
-                  {cartItems && cartItems.length > 0 && cartItems[0].name
-                    ? cartItems[0].name
+                  {firstCartItem && firstCartItem.name
+                    ? firstCartItem.name
                     : "N/A"}
-                  {cartItems &&
-                    cartItems.length > 0 &&
-                    cartItems[0].selectedColor && (
-                      <span className="text-gray-600">
-                        {" (" + cartItems[0].selectedColor + ")"}
-                      </span>
-                    )}
+                  {firstCartItem && firstCartItem.selectedColor && (
+                    <span className="text-gray-600">
+                      {" (" + firstCartItem.selectedColor + ")"}
+                    </span>
+                  )}
+                </td>
+                <td className="p-4 text-[#4A5D23] text-xs max-w-[150px]">
+                  {productDetailsString}
                 </td>
                 <td className="p-4 text-[#4A5D23]">
                   $
@@ -70,16 +93,11 @@ export const OrderList = ({ orders, getPaymentType, formatDate }) => (
                     ? parseFloat(order.amount || order.totalAmount).toFixed(2)
                     : "N/A"}
                 </td>
-                <td className="p-4">
-                  <span
-                    className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                      getPaymentType(order) === "Crypto"
-                        ? "bg-purple-100 text-purple-800"
-                        : "bg-[#4A5D23] text-white"
-                    }`}
-                  >
-                    {getPaymentType(order)}
-                  </span>
+                <td className="p-4 text-[#4A5D23]">
+                  $
+                  {order.shippingFee !== undefined && order.shippingFee !== null
+                    ? parseFloat(order.shippingFee).toFixed(2)
+                    : "0.00"}
                 </td>
                 <td className="p-4">
                   <span
@@ -104,6 +122,9 @@ export const OrderList = ({ orders, getPaymentType, formatDate }) => (
                         `Order ID: ${
                           order.chargeId || order.transactionRef || order.id
                         }\n` +
+                          `Status: ${order.status || "N/A"}\n` +
+                          `Order Date: ${formatDate(order.createdAt)}\n` +
+                          "---------------------------\n" +
                           `Customer Name: ${
                             customer && customer.name ? customer.name : "N/A"
                           }\n` +
@@ -118,67 +139,77 @@ export const OrderList = ({ orders, getPaymentType, formatDate }) => (
                               ? customer.location
                               : "N/A"
                           }\n` +
+                          `Pickup Option: ${
+                            customer && customer.pickupOption
+                              ? customer.pickupOption
+                              : "N/A"
+                          }\n` +
+                          (order.selectedPickupLocation
+                            ? `Pickup Location: ${order.selectedPickupLocation.name} (${order.selectedPickupLocation.address})\n`
+                            : "") +
+                          "---------------------------\n" +
                           `Product: ${
-                            cartItems &&
-                            cartItems.length > 0 &&
-                            cartItems[0].name
-                              ? cartItems[0].name
+                            firstCartItem && firstCartItem.name
+                              ? firstCartItem.name
                               : "N/A"
                           }\n` +
                           `Product ID: ${
-                            cartItems && cartItems.length > 0 && cartItems[0].id
-                              ? cartItems[0].id
+                            firstCartItem && firstCartItem.id
+                              ? firstCartItem.id
                               : "N/A"
                           }\n` +
                           `Quantity: ${
-                            cartItems &&
-                            cartItems.length > 0 &&
-                            cartItems[0].quantity
-                              ? cartItems[0].quantity
+                            firstCartItem && firstCartItem.quantity
+                              ? firstCartItem.quantity
                               : "N/A"
                           }\n` +
                           `Color: ${
-                            cartItems &&
-                            cartItems.length > 0 &&
-                            cartItems[0].selectedColor
-                              ? cartItems[0].selectedColor
+                            firstCartItem && firstCartItem.selectedColor
+                              ? firstCartItem.selectedColor
+                              : firstCartItem && firstCartItem.color
+                              ? firstCartItem.color
+                              : "N/A"
+                          }\n` +
+                          `Length: ${
+                            firstCartItem && firstCartItem.length
+                              ? firstCartItem.length
+                              : "N/A"
+                          }\n` +
+                          `Size: ${
+                            firstCartItem && firstCartItem.size
+                              ? firstCartItem.size
+                              : "N/A"
+                          }\n` +
+                          `Style: ${
+                            firstCartItem && firstCartItem.style
+                              ? firstCartItem.style
+                              : "N/A"
+                          }\n` +
+                          `Thickness: ${
+                            firstCartItem && firstCartItem.thickness
+                              ? firstCartItem.thickness
                               : "N/A"
                           }\n` +
                           `Product Price: $${
-                            cartItems &&
-                            cartItems.length > 0 &&
-                            cartItems[0].price
-                              ? cartItems[0].price.toFixed(2)
+                            firstCartItem && firstCartItem.price
+                              ? firstCartItem.price.toFixed(2)
                               : "N/A"
                           }\n` +
+                          "---------------------------\n" +
                           `Subtotal: $${
                             order.subtotal ? order.subtotal.toFixed(2) : "N/A"
                           }\n` +
                           `Shipping Fee: $${
-                            order.shippingFee
-                              ? order.shippingFee.toFixed(2)
-                              : "N/A"
+                            order.shippingFee !== undefined &&
+                            order.shippingFee !== null
+                              ? parseFloat(order.shippingFee).toFixed(2)
+                              : "0.00"
                           }\n` +
                           `Total Amount: $${
                             order.amount || order.totalAmount
                               ? parseFloat(
                                   order.amount || order.totalAmount
                                 ).toFixed(2)
-                              : "N/A"
-                          }\n` +
-                          `Order Date: ${formatDate(order.createdAt)}\n` +
-                          `Webhook Received: ${
-                            formatDate(order.webhookReceivedAt) || "N/A"
-                          }\n` +
-                          `Webhook Event: ${order.webhookEvent || "N/A"}\n` +
-                          `Charge ID: ${order.chargeId || "N/A"}\n` +
-                          `Crypto Payment URL: ${order.hostedUrl || "N/A"}\n` +
-                          `Transaction Reference: ${
-                            order.transactionRef || "N/A"
-                          }\n` +
-                          `Metadata: ${
-                            order.metadata
-                              ? JSON.stringify(order.metadata, null, 2)
                               : "N/A"
                           }`
                       )

@@ -1,82 +1,124 @@
-import { createContext, useContext, useState, useEffect } from "react";
+// src/context/CartContext.jsx
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem("cart");
-    return savedCart ? JSON.parse(savedCart) : [];
+    try {
+      const saved = localStorage.getItem("cart");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
+  // Persist cart to localStorage
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
+    try {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    } catch (e) {
+      console.warn("Failed to save cart to localStorage", e);
+    }
   }, [cart]);
 
-  const handleAddToCart = (product, selectedQuantity, selectedAttributes) => {
-    if (product?.quantity === 0 || selectedQuantity < 1) {
-      return;
-    }
-    const cartItem = {
-      id: product.id,
-      title: product.title,
-      quantity: selectedQuantity,
-      price: product.price, // Price in GHS
-      images: product.images,
-      selectedColor: selectedAttributes?.selectedColor || "N/A",
-      selectedLength: selectedAttributes?.selectedLength || "N/A",
-      selectedSize: selectedAttributes?.selectedSize || "N/A",
-      selectedStyle: selectedAttributes?.selectedStyle || "N/A",
-      selectedThickness: selectedAttributes?.selectedThickness || "N/A",
-    };
-    setCart((prevCart) => {
-      const existingItem = prevCart.find(
-        (item) =>
-          item.id === product.id &&
-          item.selectedColor === cartItem.selectedColor &&
-          item.selectedLength === cartItem.selectedLength &&
-          item.selectedSize === cartItem.selectedSize &&
-          item.selectedStyle === cartItem.selectedStyle &&
-          item.selectedThickness === cartItem.selectedThickness
-      );
-      if (existingItem) {
-        return prevCart.map((item) =>
-          item.id === product.id &&
-          item.selectedColor === cartItem.selectedColor &&
-          item.selectedLength === cartItem.selectedLength &&
-          item.selectedSize === cartItem.selectedSize &&
-          item.selectedStyle === cartItem.selectedStyle &&
-          item.selectedThickness === cartItem.selectedThickness
-            ? { ...item, quantity: item.quantity + selectedQuantity }
-            : item
-        );
+  /**
+   * Add to cart – accepts full payload from ProductDetails
+   */
+  const handleAddToCart = useCallback(
+    ({
+      product,
+      selectedQuantity,
+      selectedColor,
+      selectedLength,
+      selectedSize,
+      selectedStyle,
+      selectedThickness,
+    }) => {
+      if (!product || product.quantity === 0 || selectedQuantity < 1) {
+        return { success: false, message: "Invalid product or quantity" };
       }
-      return [...prevCart, cartItem];
-    });
-    console.log(
-      `Added to cart: ${
-        product.title
-      }, Quantity: ${selectedQuantity}, Price: ₵${product.price.toFixed(
-        2
-      )}, Attributes:`,
-      selectedAttributes
-    );
-  };
+
+      const qty = Math.min(selectedQuantity, product.quantity);
+
+      // Validate required attributes
+      const missing = [];
+      if (product.colors?.length > 0 && !selectedColor) missing.push("Color");
+      if (product.length?.length > 0 && !selectedLength) missing.push("Length");
+      if (product.size?.length > 0 && !selectedSize) missing.push("Size");
+      if (product.style?.length > 0 && !selectedStyle) missing.push("Style");
+      if (product.thickness?.length > 0 && !selectedThickness)
+        missing.push("Thickness");
+
+      if (missing.length > 0) {
+        return { success: false, message: `Select: ${missing.join(", ")}` };
+      }
+
+      const cartItem = {
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        quantity: qty,
+        maxQuantity: product.quantity,
+        images: product.images || [],
+        selectedColor: selectedColor || "N/A",
+        selectedLength: selectedLength || "N/A",
+        selectedSize: selectedSize || "N/A",
+        selectedStyle: selectedStyle || "N/A",
+        selectedThickness: selectedThickness || "N/A",
+      };
+
+      setCart((prev) => {
+        const existing = prev.find(
+          (i) =>
+            i.id === cartItem.id &&
+            i.selectedColor === cartItem.selectedColor &&
+            i.selectedLength === cartItem.selectedLength &&
+            i.selectedSize === cartItem.selectedSize &&
+            i.selectedStyle === cartItem.selectedStyle &&
+            i.selectedThickness === cartItem.selectedThickness
+        );
+
+        if (existing) {
+          const newQty = Math.min(existing.quantity + qty, product.quantity);
+          return prev.map((i) =>
+            i === existing ? { ...i, quantity: newQty } : i
+          );
+        }
+
+        return [...prev, cartItem];
+      });
+
+      return { success: true };
+    },
+    []
+  );
 
   const removeFromCart = (index) => {
-    setCart((prevCart) => prevCart.filter((_, i) => i !== index));
+    setCart((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const updateQuantity = (index, newQuantity) => {
-    setCart((prevCart) =>
-      prevCart.map((item, i) =>
-        i === index ? { ...item, quantity: Math.max(1, newQuantity) } : item
+  const updateQuantity = (index, newQty) => {
+    const qty = Math.max(1, newQty);
+    setCart((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? { ...item, quantity: Math.min(qty, item.maxQuantity || qty) }
+          : item
       )
     );
   };
 
-  const clearCart = () => {
-    setCart([]);
-  };
+  const clearCart = () => setCart([]);
+
+  const totalItems = cart.reduce((sum, i) => sum + i.quantity, 0);
+  const totalPrice = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   return (
     <CartContext.Provider
@@ -86,6 +128,8 @@ export const CartProvider = ({ children }) => {
         removeFromCart,
         updateQuantity,
         clearCart,
+        totalItems,
+        totalPrice,
       }}
     >
       {children}
@@ -93,4 +137,8 @@ export const CartProvider = ({ children }) => {
   );
 };
 
-export const useCart = () => useContext(CartContext);
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) throw new Error("useCart must be used within CartProvider");
+  return context;
+};

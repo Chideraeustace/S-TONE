@@ -21,6 +21,7 @@ import Account from "./components/Account";
 import Testimonials from "./components/Testimonials";
 import Kit from "./components/Kit";
 import Booking from "./components/booking";
+import Learning from "./components/learning";
 import { useCategories } from "./components/CategoriesContex";
 
 // --- PROMO MODAL COMPONENT ---
@@ -256,7 +257,7 @@ function App() {
             path="/learning-portal"
             element={
               <ProtectedRouteWrapper>
-                <Category />
+                <Learning/>
               </ProtectedRouteWrapper>
             }
           />

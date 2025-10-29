@@ -4,6 +4,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../Firebase";
 import { FaShoppingCart } from "react-icons/fa";
 import { useCart } from "./CartContext";
+import { toast } from "react-toastify";
 
 const ProductDetails = () => {
   const { productId } = useParams();
@@ -92,16 +93,22 @@ const ProductDetails = () => {
   };
 
   const handleAddToCartClick = () => {
-    if (product && selectedQuantity > 0 && product.quantity > 0) {
-      handleAddToCart({
-        ...product,
-        selectedQuantity,
-        selectedColor,
-        selectedLength,
-        selectedSize,
-        selectedStyle,
-        selectedThickness,
-      });
+    if (!product || product.quantity === 0) return;
+
+    const result = handleAddToCart({
+      product,
+      selectedQuantity,
+      selectedColor,
+      selectedLength,
+      selectedSize,
+      selectedStyle,
+      selectedThickness,
+    });
+
+    if (!result.success) {
+      toast.error(result.message);
+    } else {
+      toast.success(`${product.title} added to cart!`);
     }
   };
 

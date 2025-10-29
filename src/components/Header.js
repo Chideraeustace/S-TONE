@@ -168,7 +168,7 @@ const Header = () => {
                   className="flex items-center text-sm text-white hover:text-blue-600 transition-colors"
                 >
                   <BiDollar className="mr-2 text-lg" />
-                  USD
+                  GHC
                 </button>
                 <ul
                   className={`absolute right-0 bg-white shadow-lg rounded mt-2 w-48 z-50 transition-all duration-200 ${
@@ -373,19 +373,7 @@ const Header = () => {
                   </div>
                 </li>
               ))}
-              <li>
-                <NavLink
-                  to="/kits"
-                  onClick={handleNavLinkClick}
-                  className={({ isActive }) =>
-                    isActive
-                      ? "text-blue-600 font-semibold text-base"
-                      : "text-gray-700 hover:text-blue-600 text-base transition-colors"
-                  }
-                >
-                  Kits
-                </NavLink>
-              </li>
+
               <li>
                 <NavLink
                   to="/glam-guide"
